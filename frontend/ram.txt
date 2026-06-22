@@ -1,0 +1,17 @@
+The generated PowerShell upload command exceeds the terminal parser limit and cannot run.
+
+Do not generate large inline multipart PowerShell commands.
+
+Create the test files directly in the backend project and provide simple curl commands or Python scripts instead.
+
+I need a reliable way to upload:
+1. AI-generated text
+2. Human-written text
+
+and compare the resulting:
+- AI score
+- Authorship score
+- Cross-language score
+- Authenticity score
+
+Use files already saved on disk and keep commands short enough to run in PowerShell.

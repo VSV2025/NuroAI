@@ -1,0 +1,31 @@
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/dist-ssr/
+frontend/*.local
+frontend/*.tsbuildinfo
+
+# Backend
+backend/__pycache__/
+backend/**/__pycache__/
+backend/*.pyc
+backend/**/*.pyc
+backend/venv/
+backend/.venv/
+backend/env/
+backend/uploads/
+backend/test_docs/
+
+# Logs
+*.log
+
+# Environment secrets
+.env
+.env.local
+frontend/.env
+frontend/.env.local
+backend/.env
+
+# OS
+.DS_Store
+Thumbs.db

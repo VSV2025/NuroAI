@@ -1,0 +1,118 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --red-glow: rgba(255, 30, 30, 0.35);
+  --metal-glow: rgba(255, 255, 255, 0.15);
+}
+
+@layer base {
+  * {
+    border-color: rgba(255, 255, 255, 0.06);
+  }
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    @apply bg-ink-0 text-silver font-sans antialiased;
+    background-image:
+      radial-gradient(1100px 600px at 78% -8%, rgba(255, 30, 30, 0.10), transparent 60%),
+      radial-gradient(900px 500px at -5% 12%, rgba(255, 255, 255, 0.04), transparent 55%);
+    background-attachment: fixed;
+  }
+  ::selection {
+    background: rgba(255, 30, 30, 0.32);
+    color: #fff;
+  }
+  /* Scrollbar */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #050505;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: linear-gradient(#2a2a2a, #141414);
+    border-radius: 999px;
+    border: 2px solid #050505;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(#3a0d0d, #991b1b);
+  }
+}
+
+@layer components {
+  /* Frosted glass panel with a machined metal bevel — the signature element */
+  .glass {
+    @apply relative rounded-2xl border border-white/[0.07] bg-white/[0.02] backdrop-blur-xl;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.08),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.5),
+      0 24px 60px -28px rgba(0, 0, 0, 0.9);
+  }
+  /* Hairline metal edge that catches "light" like the logo's beveled type */
+  .metal-edge::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.35),
+      rgba(255, 255, 255, 0.02) 28%,
+      rgba(0, 0, 0, 0) 55%,
+      rgba(255, 30, 30, 0.18)
+    );
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+  .text-metal {
+    background: linear-gradient(135deg, #ffffff 0%, #d9d9d9 42%, #7e7e7e 70%, #e8e8e8 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .text-crimson-metal {
+    background: linear-gradient(135deg, #ff5a5a 0%, #ff1e1e 40%, #991b1b 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .eyebrow {
+    @apply font-mono text-[11px] uppercase tracking-ultra text-silver-dim;
+  }
+  .grid-faint {
+    background-image:
+      linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+    background-size: 46px 46px;
+  }
+  .shimmer {
+    background: linear-gradient(
+      100deg,
+      transparent 30%,
+      rgba(255, 255, 255, 0.14) 50%,
+      transparent 70%
+    );
+    background-size: 200% 100%;
+    @apply animate-shimmer;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

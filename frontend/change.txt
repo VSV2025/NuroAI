@@ -1,0 +1,22 @@
+Commit all changes and push everything to my GitHub repository NuroAI.
+
+Requirements:
+1. Initialize git if needed.
+2. Create a proper .gitignore.
+3. Exclude:
+   - node_modules
+   - dist
+   - uploads
+   - test_docs
+   - *.log
+   - .env
+   - *.tsbuildinfo
+4. Commit all required frontend and backend source code.
+5. Push to the GitHub repository:
+   https://github.com/VSV2025/NuroAI
+6. Verify the repository contains both frontend and backend code.
+7. Generate a deployment summary with:
+   - Frontend deployment steps
+   - Backend deployment steps
+   - Required environment variables
+   - Production URL configuration
