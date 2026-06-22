@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from .db import ping
-from .routers import dashboard, documents, authorship, crosslang, code, settings, authors
+from .routers import dashboard, documents, authorship, crosslang, code, settings, authors, auth, admin, users
 
 
 def create_app() -> FastAPI:
@@ -69,6 +69,9 @@ def create_app() -> FastAPI:
     app.include_router(code.router, prefix="/api/code", tags=["code"])
     app.include_router(settings.router, prefix="/api/settings", tags=["settings"])
     app.include_router(authors.router, prefix="/api/authors", tags=["authors"])
+    app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
+    app.include_router(admin.router, prefix="/api/admin", tags=["admin"])
+    app.include_router(users.router, prefix="/api/users", tags=["users"])
 
     return app
 

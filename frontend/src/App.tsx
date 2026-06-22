@@ -3,8 +3,9 @@ import {
   Shield, ShieldCheck, ScanLine, Brain, Fingerprint, Languages, Code2,
   FileSearch, BarChart3, Settings, LayoutDashboard, FileText, AlertTriangle,
   Activity, ChevronRight, Play, ArrowRight, Upload, CheckCircle2, Circle,
-  Eye, GitCompare, Sparkles, Lock, Layers, Cpu, Globe2, FileCheck2,
-  TrendingUp, Search, Bell, Menu, X, Zap, Database, Network
+  Eye, EyeOff, GitCompare, Sparkles, Lock, Layers, Cpu, Globe2, FileCheck2,
+  TrendingUp, Search, Bell, Menu, X, Zap, Database, Network,
+  User, LogOut, ChevronDown, UserCheck, ShieldAlert
 } from "lucide-react";
 import {
   ResponsiveContainer, AreaChart, Area, LineChart, Line, BarChart, Bar,
@@ -3486,7 +3487,7 @@ const NAV = [
   { id: "settings", label: "Settings", icon: Settings },
 ];
 
-function Shell({ view, go, children }) {
+function Shell({ view, go, children, authUser = null, onLogout = () => {} }: { view: string; go: (v: string) => void; children: React.ReactNode; authUser?: AuthUser | null; onLogout?: () => void }) {
   const [open, setOpen] = useState(false);
   const health = useBackendHealth();
   return (
@@ -3530,7 +3531,7 @@ function Shell({ view, go, children }) {
             <Search size={16} />
             <span>Search documents, authors, reports…</span>
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 18 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
             <span className="chip" style={{
               color: health === "online" ? "#7ee787" : health === "offline" ? C.red : "#f59e0b",
               borderColor: health === "online" ? "rgba(126,231,135,.25)" : health === "offline" ? "rgba(239,68,68,.35)" : "rgba(245,158,11,.3)",
@@ -3539,6 +3540,17 @@ function Shell({ view, go, children }) {
               <Activity size={13} />
               {health === "online" ? "Backend online" : health === "offline" ? "Backend offline" : "Connecting…"}
             </span>
+            {authUser ? (
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                {authUser.role === "admin" && <button onClick={() => go("admin")} style={{ padding: "5px 12px", borderRadius: 8, fontSize: 12, fontWeight: 700, background: "rgba(255,30,30,.1)", border: "1px solid rgba(255,30,30,.25)", color: C.red, cursor: "pointer", display: "flex", alignItems: "center", gap: 5 }}><ShieldAlert size={13} /> Admin</button>}
+                <button onClick={() => go("user-dashboard")} style={{ padding: "5px 12px", borderRadius: 8, fontSize: 12, fontWeight: 600, background: "rgba(255,255,255,.05)", border: "1px solid rgba(255,255,255,.1)", color: "#d4d4d8", cursor: "pointer" }}>
+                  {authUser.full_name.split(" ")[0]}
+                </button>
+                <button onClick={onLogout} style={{ color: "#6a6a70", background: "none", border: "none", cursor: "pointer", display: "flex" }}><LogOut size={16} /></button>
+              </div>
+            ) : (
+              <button onClick={() => go("auth")} className="btn btn-ghost" style={{ padding: "6px 14px", fontSize: 13 }}>Login</button>
+            )}
             <Bell size={18} color="#9a9aa0" />
           </div>
         </header>
@@ -4413,12 +4425,14 @@ function Toggle({ on, onChange }: { on: boolean; onChange: (v: boolean) => void 
 /* ============================================================
    TOP NAV (marketing)
    ============================================================ */
-function TopNav({ go }) {
+function TopNav({ go, authUser, onLogout }: { go: (v: string) => void; authUser: AuthUser | null; onLogout: () => void }) {
   const [scrolled, setScrolled] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   useEffect(() => {
     const f = () => setScrolled(window.scrollY > 20);
     window.addEventListener("scroll", f); return () => window.removeEventListener("scroll", f);
   }, []);
+  const initials = authUser ? authUser.full_name.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase() : "";
   return (
     <nav style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 50, height: 66,
       display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 24px",
@@ -4427,6 +4441,25 @@ function TopNav({ go }) {
       <div onClick={() => go("landing")} style={{ cursor: "pointer" }}><Logo size={28} tagline={false} /></div>
       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
         <button className="btn btn-ghost" style={{ padding: "9px 16px" }} onClick={() => go("dashboard")}>Dashboard</button>
+        {authUser ? (
+          <div style={{ position: "relative" }}>
+            <button onClick={() => setMenuOpen(!menuOpen)} style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 12px", borderRadius: 10, background: "rgba(255,255,255,.05)", border: "1px solid rgba(255,255,255,.12)", color: "#e8e8ea", cursor: "pointer" }}>
+              <div style={{ width: 26, height: 26, borderRadius: "50%", background: "linear-gradient(135deg,#ff3b3b,#7f1414)", display: "grid", placeItems: "center", fontSize: 11, fontWeight: 700, color: "#fff" }}>{initials}</div>
+              <span style={{ fontSize: 13, fontWeight: 500 }}>{authUser.full_name.split(" ")[0]}</span>
+              <ChevronDown size={13} />
+            </button>
+            {menuOpen && (
+              <div style={{ position: "absolute", right: 0, top: "calc(100% + 6px)", width: 180, background: "rgba(11,16,32,.96)", border: "1px solid rgba(255,255,255,.1)", borderRadius: 12, backdropFilter: "blur(20px)", padding: 6, zIndex: 100 }}>
+                <button onClick={() => { go("user-dashboard"); setMenuOpen(false); }} style={{ width: "100%", textAlign: "left", padding: "9px 12px", borderRadius: 8, fontSize: 13, color: "#d4d4d8", background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 8 }}><User size={14} /> My Dashboard</button>
+                {authUser.role === "admin" && <button onClick={() => { go("admin"); setMenuOpen(false); }} style={{ width: "100%", textAlign: "left", padding: "9px 12px", borderRadius: 8, fontSize: 13, color: C.red, background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 8 }}><ShieldAlert size={14} /> Admin Panel</button>}
+                <div style={{ height: 1, background: "rgba(255,255,255,.07)", margin: "4px 0" }} />
+                <button onClick={() => { onLogout(); setMenuOpen(false); }} style={{ width: "100%", textAlign: "left", padding: "9px 12px", borderRadius: 8, fontSize: 13, color: "#8a8a90", background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 8 }}><LogOut size={14} /> Sign out</button>
+              </div>
+            )}
+          </div>
+        ) : (
+          <button className="btn btn-ghost" style={{ padding: "9px 16px" }} onClick={() => go("auth")}>Login</button>
+        )}
         <button className="btn btn-primary" style={{ padding: "9px 18px" }} onClick={() => go("analyze")}>
           <ScanLine size={15} /> Start Analysis
         </button>
@@ -4459,6 +4492,561 @@ function LoadingScreen() {
 }
 
 /* ============================================================
+   AUTH TYPES & HELPERS
+   ============================================================ */
+interface AuthUser {
+  id: string;
+  email: string;
+  full_name: string;
+  organization: string;
+  role: "admin" | "researcher";
+}
+
+function getStoredAuth(): { token: string; user: AuthUser } | null {
+  try {
+    const token = localStorage.getItem("nuroai_token");
+    const raw = localStorage.getItem("nuroai_user");
+    if (!token || !raw) return null;
+    return { token, user: JSON.parse(raw) };
+  } catch { return null; }
+}
+
+function storeAuth(token: string, user: AuthUser) {
+  localStorage.setItem("nuroai_token", token);
+  localStorage.setItem("nuroai_user", JSON.stringify(user));
+}
+
+function clearAuth() {
+  localStorage.removeItem("nuroai_token");
+  localStorage.removeItem("nuroai_user");
+}
+
+/* ============================================================
+   AUTH PAGE (Login / Signup / Forgot Password)
+   ============================================================ */
+function AuthPage({ onSuccess, go }: { onSuccess: (token: string, user: AuthUser) => void; go: (v: string) => void }) {
+  const [tab, setTab] = useState<"login" | "signup" | "forgot">("login");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [showPw, setShowPw] = useState(false);
+  const [loginEmail, setLoginEmail] = useState("");
+  const [loginPw, setLoginPw] = useState("");
+  const [rememberMe, setRememberMe] = useState(false);
+  const [signName, setSignName] = useState("");
+  const [signOrg, setSignOrg] = useState("");
+  const [signEmail, setSignEmail] = useState("");
+  const [signPw, setSignPw] = useState("");
+  const [signPwConfirm, setSignPwConfirm] = useState("");
+  const [forgotEmail, setForgotEmail] = useState("");
+
+  const clear = () => { setError(""); setSuccess(""); };
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault(); clear();
+    if (!loginEmail || !loginPw) { setError("Email and password are required"); return; }
+    setLoading(true);
+    try {
+      const r = await fetch(`${API}/api/auth/login`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: loginEmail, password: loginPw, remember_me: rememberMe }),
+      });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.detail ?? "Login failed");
+      storeAuth(d.token, d.user);
+      onSuccess(d.token, d.user);
+    } catch (err: any) { setError(err.message); }
+    finally { setLoading(false); }
+  };
+
+  const handleSignup = async (e: React.FormEvent) => {
+    e.preventDefault(); clear();
+    if (!signName || !signEmail || !signPw) { setError("All fields are required"); return; }
+    if (signPw !== signPwConfirm) { setError("Passwords do not match"); return; }
+    if (signPw.length < 8) { setError("Password must be at least 8 characters"); return; }
+    setLoading(true);
+    try {
+      const r = await fetch(`${API}/api/auth/signup`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ full_name: signName, organization: signOrg, email: signEmail, password: signPw }),
+      });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.detail ?? "Sign up failed");
+      storeAuth(d.token, d.user);
+      onSuccess(d.token, d.user);
+    } catch (err: any) { setError(err.message); }
+    finally { setLoading(false); }
+  };
+
+  const handleForgot = async (e: React.FormEvent) => {
+    e.preventDefault(); clear();
+    if (!forgotEmail) { setError("Email is required"); return; }
+    setLoading(true);
+    try {
+      const r = await fetch(`${API}/api/auth/forgot-password`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: forgotEmail }),
+      });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.detail ?? "Request failed");
+      setSuccess(`Reset token generated: ${d.reset_token}`);
+    } catch (err: any) { setError(err.message); }
+    finally { setLoading(false); }
+  };
+
+  const inp: React.CSSProperties = {
+    width: "100%", padding: "12px 14px", borderRadius: 10, fontSize: 14,
+    background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.12)",
+    color: "#e8e8ea", outline: "none",
+  };
+
+  return (
+    <div style={{ minHeight: "100vh", background: C.black0, display: "flex", alignItems: "center", justifyContent: "center", padding: 24, position: "relative" }}>
+      <DeepSpaceBackground />
+      <div style={{ position: "relative", zIndex: 1, width: "100%", maxWidth: 440 }}>
+        <div style={{ textAlign: "center", marginBottom: 28, cursor: "pointer" }} onClick={() => go("landing")}>
+          <Logo size={34} tagline={false} />
+        </div>
+        <Glass pad={36}>
+          {/* Tabs */}
+          <div style={{ display: "flex", gap: 4, marginBottom: 26, background: "rgba(255,255,255,0.04)", borderRadius: 10, padding: 4 }}>
+            {(["login", "signup", "forgot"] as const).map(t => (
+              <button key={t} onClick={() => { setTab(t); clear(); }} style={{
+                flex: 1, padding: "8px 4px", borderRadius: 8, fontSize: 13, fontWeight: 600, transition: "all .2s",
+                background: tab === t ? "linear-gradient(180deg,#ff3b3b,#c81e1e)" : "transparent",
+                color: tab === t ? "#fff" : "#7a7a80",
+                boxShadow: tab === t ? "0 0 14px rgba(255,30,30,.35)" : "none",
+              }}>
+                {t === "login" ? "Login" : t === "signup" ? "Sign Up" : "Reset"}
+              </button>
+            ))}
+          </div>
+
+          {error && <div style={{ padding: "10px 14px", borderRadius: 9, marginBottom: 14, fontSize: 13, background: "rgba(255,30,30,.1)", border: "1px solid rgba(255,30,30,.3)", color: C.red }}>{error}</div>}
+          {success && <div style={{ padding: "10px 14px", borderRadius: 9, marginBottom: 14, fontSize: 13, background: "rgba(126,231,135,.1)", border: "1px solid rgba(126,231,135,.3)", color: "#7ee787", wordBreak: "break-all" }}>{success}</div>}
+
+          {tab === "login" && (
+            <form onSubmit={handleLogin} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+              <div><div style={{ fontSize: 12, color: "#8a8a90", marginBottom: 6 }}>Email</div><input style={inp} type="email" placeholder="you@institution.edu" value={loginEmail} onChange={e => setLoginEmail(e.target.value)} /></div>
+              <div>
+                <div style={{ fontSize: 12, color: "#8a8a90", marginBottom: 6 }}>Password</div>
+                <div style={{ position: "relative" }}>
+                  <input style={{ ...inp, paddingRight: 42 }} type={showPw ? "text" : "password"} placeholder="••••••••" value={loginPw} onChange={e => setLoginPw(e.target.value)} />
+                  <button type="button" onClick={() => setShowPw(!showPw)} style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", color: "#6a6a70" }}>{showPw ? <EyeOff size={16} /> : <Eye size={16} />}</button>
+                </div>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "#8a8a90", cursor: "pointer" }}>
+                  <input type="checkbox" checked={rememberMe} onChange={e => setRememberMe(e.target.checked)} style={{ accentColor: C.crimson }} /> Remember me
+                </label>
+                <button type="button" onClick={() => { setTab("forgot"); clear(); }} style={{ fontSize: 13, color: C.red, background: "none", border: "none", cursor: "pointer" }}>Forgot password?</button>
+              </div>
+              <button type="submit" className="btn btn-primary" disabled={loading} style={{ width: "100%", justifyContent: "center", marginTop: 4, opacity: loading ? 0.7 : 1 }}>{loading ? "Signing in…" : "Sign In"}</button>
+            </form>
+          )}
+
+          {tab === "signup" && (
+            <form onSubmit={handleSignup} style={{ display: "flex", flexDirection: "column", gap: 13 }}>
+              <div><div style={{ fontSize: 12, color: "#8a8a90", marginBottom: 6 }}>Full Name</div><input style={inp} type="text" placeholder="Dr. Jane Smith" value={signName} onChange={e => setSignName(e.target.value)} /></div>
+              <div><div style={{ fontSize: 12, color: "#8a8a90", marginBottom: 6 }}>Institution / Organization</div><input style={inp} type="text" placeholder="MIT Research Lab" value={signOrg} onChange={e => setSignOrg(e.target.value)} /></div>
+              <div><div style={{ fontSize: 12, color: "#8a8a90", marginBottom: 6 }}>Email</div><input style={inp} type="email" placeholder="you@institution.edu" value={signEmail} onChange={e => setSignEmail(e.target.value)} /></div>
+              <div>
+                <div style={{ fontSize: 12, color: "#8a8a90", marginBottom: 6 }}>Password</div>
+                <div style={{ position: "relative" }}>
+                  <input style={{ ...inp, paddingRight: 42 }} type={showPw ? "text" : "password"} placeholder="Min. 8 characters" value={signPw} onChange={e => setSignPw(e.target.value)} />
+                  <button type="button" onClick={() => setShowPw(!showPw)} style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", color: "#6a6a70" }}>{showPw ? <EyeOff size={16} /> : <Eye size={16} />}</button>
+                </div>
+              </div>
+              <div><div style={{ fontSize: 12, color: "#8a8a90", marginBottom: 6 }}>Confirm Password</div><input style={inp} type="password" placeholder="Repeat password" value={signPwConfirm} onChange={e => setSignPwConfirm(e.target.value)} /></div>
+              <button type="submit" className="btn btn-primary" disabled={loading} style={{ width: "100%", justifyContent: "center", marginTop: 4, opacity: loading ? 0.7 : 1 }}>{loading ? "Creating account…" : "Create Account"}</button>
+            </form>
+          )}
+
+          {tab === "forgot" && (
+            <form onSubmit={handleForgot} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+              <p style={{ fontSize: 13, color: "#8a8a90" }}>Enter your email to receive a password reset token.</p>
+              <div><div style={{ fontSize: 12, color: "#8a8a90", marginBottom: 6 }}>Email</div><input style={inp} type="email" placeholder="you@institution.edu" value={forgotEmail} onChange={e => setForgotEmail(e.target.value)} /></div>
+              <button type="submit" className="btn btn-primary" disabled={loading} style={{ width: "100%", justifyContent: "center", marginTop: 4, opacity: loading ? 0.7 : 1 }}>{loading ? "Sending…" : "Send Reset Token"}</button>
+              <button type="button" onClick={() => { setTab("login"); clear(); }} style={{ fontSize: 13, color: "#8a8a90", textAlign: "center", background: "none", border: "none", cursor: "pointer" }}>← Back to Login</button>
+            </form>
+          )}
+        </Glass>
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================
+   ADMIN DASHBOARD PAGE
+   ============================================================ */
+function AdminDashboardPage({ token, authUser, onLogout, go }: { token: string; authUser: AuthUser; onLogout: () => void; go: (v: string) => void }) {
+  const [section, setSection] = useState("overview");
+  const [overview, setOverview] = useState<any>(null);
+  const [users, setUsers] = useState<any[]>([]);
+  const [userSearch, setUserSearch] = useState("");
+  const [docs, setDocs] = useState<any[]>([]);
+  const [auditLogs, setAuditLogs] = useState<any[]>([]);
+  const [analytics, setAnalytics] = useState<any[]>([]);
+  const [notification, setNotification] = useState<{ msg: string; ok: boolean } | null>(null);
+
+  const ah = { Authorization: `Bearer ${token}` };
+  const notify = (msg: string, ok = true) => { setNotification({ msg, ok }); setTimeout(() => setNotification(null), 3500); };
+
+  useEffect(() => {
+    fetch(`${API}/api/admin/overview`, { headers: ah }).then(r => r.json()).then(setOverview).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (section === "users") fetch(`${API}/api/admin/users?search=${encodeURIComponent(userSearch)}`, { headers: ah }).then(r => r.json()).then(d => setUsers(d.users ?? [])).catch(() => {});
+    else if (section === "documents") fetch(`${API}/api/admin/documents`, { headers: ah }).then(r => r.json()).then(d => setDocs(d.documents ?? [])).catch(() => {});
+    else if (section === "audit") fetch(`${API}/api/admin/audit-logs`, { headers: ah }).then(r => r.json()).then(d => setAuditLogs(d.logs ?? [])).catch(() => {});
+    else if (section === "analytics") fetch(`${API}/api/admin/analytics`, { headers: ah }).then(r => r.json()).then(d => setAnalytics(d.daily ?? [])).catch(() => {});
+  }, [section, userSearch]);
+
+  const updateUser = async (userId: string, updates: any) => {
+    try {
+      const r = await fetch(`${API}/api/admin/users/${userId}`, { method: "PUT", headers: { ...ah, "Content-Type": "application/json" }, body: JSON.stringify(updates) });
+      if (!r.ok) { const d = await r.json(); throw new Error(d.detail); }
+      setUsers(prev => prev.map(u => u.id === userId ? { ...u, ...updates } : u));
+      notify("User updated");
+    } catch (err: any) { notify(err.message, false); }
+  };
+
+  const deleteUser = async (userId: string) => {
+    if (!window.confirm("Delete this user?")) return;
+    try {
+      const r = await fetch(`${API}/api/admin/users/${userId}`, { method: "DELETE", headers: ah });
+      if (!r.ok) { const d = await r.json(); throw new Error(d.detail); }
+      setUsers(prev => prev.filter(u => u.id !== userId));
+      notify("User deleted");
+    } catch (err: any) { notify(err.message, false); }
+  };
+
+  const ADMIN_NAV = [
+    { id: "overview", label: "Overview", icon: LayoutDashboard },
+    { id: "users", label: "User Management", icon: User },
+    { id: "documents", label: "Document Monitoring", icon: FileText },
+    { id: "analytics", label: "Analytics", icon: BarChart3 },
+    { id: "audit", label: "Audit Logs", icon: Database },
+    { id: "system-settings", label: "System Settings", icon: Settings },
+  ];
+
+  const tbl: React.CSSProperties = { width: "100%", borderCollapse: "collapse" };
+  const th: React.CSSProperties = { textAlign: "left", padding: "8px 12px", color: "#6a6a72", fontWeight: 600, fontSize: 11, letterSpacing: ".08em", textTransform: "uppercase", borderBottom: "1px solid rgba(255,255,255,.07)" };
+  const td: React.CSSProperties = { padding: "10px 12px", borderBottom: "1px solid rgba(255,255,255,.04)", color: "#d4d4d8" };
+
+  return (
+    <div style={{ display: "flex", minHeight: "100vh", background: C.black0 }}>
+      <DeepSpaceBackground />
+      <aside style={{ width: 248, flexShrink: 0, borderRight: "1px solid rgba(0,229,255,.08)", background: "linear-gradient(180deg,rgba(7,20,38,.96),rgba(5,8,22,.98))", backdropFilter: "blur(20px)", padding: 18, position: "sticky", top: 0, height: "100vh", display: "flex", flexDirection: "column", zIndex: 10 }}>
+        <div onClick={() => go("landing")} style={{ cursor: "pointer", marginBottom: 24, paddingLeft: 4 }}><Logo size={28} tagline={false} /></div>
+        <div className="eyebrow" style={{ paddingLeft: 12, marginBottom: 8 }}>Admin Panel</div>
+        <nav style={{ display: "flex", flexDirection: "column", gap: 3, flex: 1 }}>
+          {ADMIN_NAV.map(n => (
+            <div key={n.id} className={`navitem ${section === n.id ? "active" : ""}`} onClick={() => setSection(n.id)}><n.icon size={16} /> {n.label}</div>
+          ))}
+          <div style={{ margin: "8px 0", height: 1, background: "rgba(255,255,255,.07)" }} />
+          <div className="navitem" onClick={() => go("dashboard")}><LayoutDashboard size={16} /> Intelligence Center</div>
+        </nav>
+        <div style={{ padding: "10px 12px", borderRadius: 11, background: "rgba(255,30,30,.08)", border: "1px solid rgba(255,30,30,.18)", marginTop: 12 }}>
+          <div style={{ fontSize: 11, color: C.red, fontWeight: 700, marginBottom: 4, letterSpacing: ".1em" }}>ADMIN</div>
+          <div style={{ fontSize: 13, color: "#e8e8ea" }}>{authUser.full_name}</div>
+          <button onClick={onLogout} style={{ marginTop: 8, fontSize: 12, color: "#8a8a90", display: "flex", alignItems: "center", gap: 6, background: "none", border: "none", cursor: "pointer", padding: 0 }}><LogOut size={13} /> Sign out</button>
+        </div>
+      </aside>
+
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <header style={{ position: "sticky", top: 0, zIndex: 20, height: 62, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 24px", borderBottom: "1px solid rgba(0,229,255,.07)", background: "rgba(5,8,22,.8)", backdropFilter: "blur(20px)" }}>
+          <h2 style={{ fontSize: 16, fontWeight: 700, color: "#fff" }}>{ADMIN_NAV.find(n => n.id === section)?.label ?? "Admin"}</h2>
+          {notification && <div style={{ padding: "8px 16px", borderRadius: 9, fontSize: 13, background: notification.ok ? "rgba(126,231,135,.1)" : "rgba(255,30,30,.1)", border: `1px solid ${notification.ok ? "rgba(126,231,135,.3)" : "rgba(255,30,30,.3)"}`, color: notification.ok ? "#7ee787" : C.red }}>{notification.msg}</div>}
+        </header>
+
+        <main style={{ padding: 24 }}>
+          {section === "overview" && (
+            <div className="reveal">
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(200px,1fr))", gap: 16, marginBottom: 20 }}>
+                {[
+                  { label: "Total Users", value: overview?.total_users ?? "—", icon: User, tone: "" },
+                  { label: "Active Users", value: overview?.active_users ?? "—", icon: UserCheck, tone: "green" },
+                  { label: "Total Documents", value: overview?.total_documents ?? "—", icon: FileText, tone: "" },
+                  { label: "AI Reports", value: overview?.ai_reports_generated ?? "—", icon: Brain, tone: "red" },
+                ].map(c => (
+                  <Glass key={c.label} pad={20}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+                      <div style={{ width: 34, height: 34, borderRadius: 9, background: c.tone === "red" ? "rgba(255,30,30,.15)" : c.tone === "green" ? "rgba(126,231,135,.12)" : "rgba(255,255,255,.06)", display: "grid", placeItems: "center" }}>
+                        <c.icon size={17} color={c.tone === "red" ? C.red : c.tone === "green" ? "#7ee787" : "#7a7a80"} />
+                      </div>
+                      <div style={{ fontSize: 12, color: "#8a8a90" }}>{c.label}</div>
+                    </div>
+                    <div style={{ fontSize: 30, fontWeight: 800, color: "#fff" }}>{c.value}</div>
+                  </Glass>
+                ))}
+              </div>
+              <Glass pad={20}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
+                  <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#7ee787", boxShadow: "0 0 8px rgba(126,231,135,.6)", animation: "glowPulse 2s infinite" }} />
+                  <span style={{ fontSize: 14, fontWeight: 600, color: "#fff" }}>System Health: {overview?.system_health ?? "checking…"}</span>
+                </div>
+                <p style={{ fontSize: 13, color: "#8a8a90" }}>Backend online · MongoDB connected · All engines operational</p>
+              </Glass>
+            </div>
+          )}
+
+          {section === "users" && (
+            <div className="reveal">
+              <div style={{ marginBottom: 14, position: "relative" }}>
+                <Search size={14} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "#6a6a70" }} />
+                <input value={userSearch} onChange={e => setUserSearch(e.target.value)} placeholder="Search by name or email…"
+                  style={{ width: "100%", maxWidth: 360, padding: "10px 14px 10px 34px", borderRadius: 10, background: "rgba(255,255,255,.04)", border: "1px solid rgba(255,255,255,.1)", color: "#e8e8ea", fontSize: 13, outline: "none" }} />
+              </div>
+              <Glass pad={0} style={{ overflow: "hidden" }}>
+                <table style={tbl}>
+                  <thead><tr><th style={th}>Name / Email</th><th style={th}>Org</th><th style={th}>Role</th><th style={th}>Status</th><th style={th}>Actions</th></tr></thead>
+                  <tbody>
+                    {users.length === 0 && <tr><td colSpan={5} style={{ ...td, textAlign: "center", color: "#5a5a60", padding: 32 }}>No users found</td></tr>}
+                    {users.map(u => (
+                      <tr key={u.id}>
+                        <td style={td}><div style={{ fontWeight: 600, color: "#e8e8ea" }}>{u.full_name}</div><div style={{ fontSize: 11, color: "#6a6a72" }}>{u.email}</div></td>
+                        <td style={{ ...td, color: "#8a8a90" }}>{u.organization || "—"}</td>
+                        <td style={td}>
+                          <select value={u.role} onChange={e => updateUser(u.id, { role: e.target.value })} style={{ padding: "4px 8px", borderRadius: 6, background: "rgba(255,255,255,.06)", border: "1px solid rgba(255,255,255,.1)", color: u.role === "admin" ? C.red : "#d4d4d8", fontSize: 12, cursor: "pointer" }}>
+                            <option value="researcher">Researcher</option>
+                            <option value="admin">Admin</option>
+                          </select>
+                        </td>
+                        <td style={td}><span style={{ padding: "3px 10px", borderRadius: 99, fontSize: 11, fontWeight: 700, background: u.status === "active" ? "rgba(126,231,135,.1)" : "rgba(255,30,30,.1)", color: u.status === "active" ? "#7ee787" : C.red, border: `1px solid ${u.status === "active" ? "rgba(126,231,135,.3)" : "rgba(255,30,30,.3)"}` }}>{u.status}</span></td>
+                        <td style={td}>
+                          <div style={{ display: "flex", gap: 6 }}>
+                            <button onClick={() => updateUser(u.id, { status: u.status === "active" ? "suspended" : "active" })} style={{ padding: "4px 10px", borderRadius: 6, fontSize: 11, fontWeight: 600, background: "rgba(255,255,255,.06)", border: "1px solid rgba(255,255,255,.1)", color: "#d4d4d8", cursor: "pointer" }}>{u.status === "active" ? "Suspend" : "Activate"}</button>
+                            <button onClick={() => deleteUser(u.id)} style={{ padding: "4px 10px", borderRadius: 6, fontSize: 11, fontWeight: 600, background: "rgba(255,30,30,.08)", border: "1px solid rgba(255,30,30,.2)", color: C.red, cursor: "pointer" }}>Delete</button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </Glass>
+            </div>
+          )}
+
+          {section === "documents" && (
+            <div className="reveal">
+              <Glass pad={0} style={{ overflow: "hidden" }}>
+                <table style={tbl}>
+                  <thead><tr><th style={th}>Filename</th><th style={th}>Status</th><th style={th}>AI Score</th><th style={th}>Risk</th><th style={th}>Created</th></tr></thead>
+                  <tbody>
+                    {docs.length === 0 && <tr><td colSpan={5} style={{ ...td, textAlign: "center", color: "#5a5a60", padding: 32 }}>No documents found</td></tr>}
+                    {docs.map((d: any) => (
+                      <tr key={d.id}>
+                        <td style={{ ...td, fontWeight: 600, color: "#e8e8ea" }}>{d.filename}</td>
+                        <td style={td}><span style={{ padding: "2px 9px", borderRadius: 99, fontSize: 11, fontWeight: 700, background: d.status === "complete" ? "rgba(126,231,135,.1)" : "rgba(245,158,11,.1)", color: d.status === "complete" ? "#7ee787" : "#f59e0b", border: `1px solid ${d.status === "complete" ? "rgba(126,231,135,.3)" : "rgba(245,158,11,.3)"}` }}>{d.status}</span></td>
+                        <td style={{ ...td, fontFamily: "monospace", color: (d.aiScore ?? 0) >= 60 ? C.red : "#d4d4d8" }}>{d.aiScore ?? "—"}%</td>
+                        <td style={{ ...td, color: d.risk === "HIGH" || d.risk === "CRITICAL" ? C.red : "#8a8a90" }}>{d.risk ?? "—"}</td>
+                        <td style={{ ...td, fontSize: 12, color: "#6a6a72" }}>{d.createdAt ? new Date(d.createdAt * 1000).toLocaleDateString() : "—"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </Glass>
+            </div>
+          )}
+
+          {section === "analytics" && (
+            <div className="reveal">
+              <Glass pad={24}>
+                <h3 style={{ fontSize: 15, marginBottom: 18 }}>Upload Activity — Last 30 Days</h3>
+                {analytics.length === 0
+                  ? <p style={{ color: "#6a6a72", fontSize: 13 }}>No data yet. Upload documents to see analytics.</p>
+                  : analytics.map((row: any) => {
+                      const max = Math.max(...analytics.map((r: any) => r.uploads), 1);
+                      return (
+                        <div key={row.date} style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
+                          <div style={{ width: 88, fontSize: 11, color: "#8a8a90", fontFamily: "monospace", flexShrink: 0 }}>{row.date}</div>
+                          <div style={{ flex: 1, height: 16, background: "rgba(255,255,255,.04)", borderRadius: 4, overflow: "hidden" }}>
+                            <div style={{ height: "100%", width: `${(row.uploads / max) * 100}%`, background: "linear-gradient(90deg,#ff3b3b,#c81e1e)", borderRadius: 4 }} />
+                          </div>
+                          <div style={{ width: 22, fontSize: 12, color: "#d4d4d8", fontFamily: "monospace", textAlign: "right", flexShrink: 0 }}>{row.uploads}</div>
+                          {row.ai_detections > 0 && <span style={{ fontSize: 10, color: C.red, fontWeight: 700, flexShrink: 0 }}>{row.ai_detections} AI</span>}
+                        </div>
+                      );
+                    })
+                }
+              </Glass>
+            </div>
+          )}
+
+          {section === "audit" && (
+            <div className="reveal">
+              <Glass pad={0} style={{ overflow: "hidden", maxHeight: "68vh", overflowY: "auto" }}>
+                <table style={tbl}>
+                  <thead style={{ position: "sticky", top: 0, background: "#0b0e1a", zIndex: 1 }}>
+                    <tr><th style={th}>Action</th><th style={th}>Resource</th><th style={th}>User</th><th style={th}>Time</th></tr>
+                  </thead>
+                  <tbody>
+                    {auditLogs.length === 0 && <tr><td colSpan={4} style={{ ...td, textAlign: "center", color: "#5a5a60", padding: 32 }}>No audit logs yet</td></tr>}
+                    {auditLogs.map((l: any) => (
+                      <tr key={l.id}>
+                        <td style={{ ...td, fontFamily: "monospace", color: "#e8e8ea" }}>{l.action}</td>
+                        <td style={{ ...td, color: "#8a8a90" }}>{l.resource || "—"}</td>
+                        <td style={{ ...td, fontFamily: "monospace", fontSize: 11, color: "#6a6a72" }}>{(l.user_id ?? "").slice(0, 8)}…</td>
+                        <td style={{ ...td, fontSize: 12, color: "#6a6a72" }}>{l.timestamp ? new Date(l.timestamp * 1000).toLocaleString() : "—"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </Glass>
+            </div>
+          )}
+
+          {section === "system-settings" && (
+            <div className="reveal">
+              <Glass pad={24} style={{ maxWidth: 540 }}>
+                <h3 style={{ fontSize: 15, marginBottom: 18 }}>AI Detection Thresholds</h3>
+                {[{ label: "AI Detection Sensitivity", val: 60 }, { label: "Plagiarism Alert Threshold", val: 70 }, { label: "Authorship Confidence Minimum", val: 50 }].map(({ label, val }) => (
+                  <div key={label} style={{ marginBottom: 18 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+                      <span style={{ fontSize: 14, color: "#d4d4d8" }}>{label}</span>
+                      <span className="mono" style={{ fontSize: 13, color: C.red }}>{val}%</span>
+                    </div>
+                    <input type="range" min={0} max={100} defaultValue={val} style={{ width: "100%", accentColor: C.crimson }} />
+                  </div>
+                ))}
+              </Glass>
+              <Glass pad={24} style={{ maxWidth: 540, marginTop: 16 }}>
+                <h3 style={{ fontSize: 15, marginBottom: 18 }}>Feature Toggles</h3>
+                {["AI Detection", "Plagiarism Scanning", "Authorship Verification", "Cross-Language Analysis", "Code Intelligence"].map(feat => (
+                  <div key={feat} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "11px 0", borderBottom: "1px solid rgba(255,255,255,.06)" }}>
+                    <span style={{ fontSize: 14, color: "#d4d4d8" }}>{feat}</span>
+                    <Toggle on={true} onChange={() => {}} />
+                  </div>
+                ))}
+              </Glass>
+            </div>
+          )}
+        </main>
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================
+   USER DASHBOARD PAGE
+   ============================================================ */
+function UserDashboardPage({ token, authUser, onLogout, go }: { token: string; authUser: AuthUser; onLogout: () => void; go: (v: string) => void }) {
+  const [data, setData] = useState<any>(null);
+  const [editing, setEditing] = useState(false);
+  const [editName, setEditName] = useState(authUser.full_name);
+  const [editOrg, setEditOrg] = useState(authUser.organization);
+  const [notification, setNotification] = useState<{ msg: string; ok: boolean } | null>(null);
+
+  const ah = { Authorization: `Bearer ${token}` };
+  const notify = (msg: string, ok = true) => { setNotification({ msg, ok }); setTimeout(() => setNotification(null), 3500); };
+
+  useEffect(() => {
+    fetch(`${API}/api/users/me/dashboard`, { headers: ah }).then(r => r.json()).then(setData).catch(() => {});
+  }, []);
+
+  const saveProfile = async () => {
+    try {
+      const r = await fetch(`${API}/api/users/me`, { method: "PUT", headers: { ...ah, "Content-Type": "application/json" }, body: JSON.stringify({ full_name: editName, organization: editOrg }) });
+      if (!r.ok) { const d = await r.json(); throw new Error(d.detail); }
+      notify("Profile updated"); setEditing(false);
+    } catch (err: any) { notify(err.message, false); }
+  };
+
+  const initials = authUser.full_name.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
+  const tbl: React.CSSProperties = { width: "100%", borderCollapse: "collapse" };
+  const th: React.CSSProperties = { textAlign: "left", padding: "8px 12px", color: "#6a6a72", fontWeight: 600, fontSize: 11, letterSpacing: ".08em", textTransform: "uppercase", borderBottom: "1px solid rgba(255,255,255,.07)" };
+  const td: React.CSSProperties = { padding: "10px 12px", borderBottom: "1px solid rgba(255,255,255,.04)", color: "#d4d4d8" };
+
+  return (
+    <div style={{ display: "flex", minHeight: "100vh", background: C.black0 }}>
+      <DeepSpaceBackground />
+      <aside style={{ width: 248, flexShrink: 0, borderRight: "1px solid rgba(0,229,255,.08)", background: "linear-gradient(180deg,rgba(7,20,38,.96),rgba(5,8,22,.98))", backdropFilter: "blur(20px)", padding: 18, position: "sticky", top: 0, height: "100vh", display: "flex", flexDirection: "column", zIndex: 10 }}>
+        <div onClick={() => go("landing")} style={{ cursor: "pointer", marginBottom: 24, paddingLeft: 4 }}><Logo size={28} tagline={false} /></div>
+        <div className="eyebrow" style={{ paddingLeft: 12, marginBottom: 8 }}>My Account</div>
+        <nav style={{ display: "flex", flexDirection: "column", gap: 3, flex: 1 }}>
+          <div className="navitem active"><User size={16} /> My Dashboard</div>
+          <div className="navitem" onClick={() => go("dashboard")}><LayoutDashboard size={16} /> Intelligence Center</div>
+          <div className="navitem" onClick={() => go("analyze")}><FileSearch size={16} /> New Analysis</div>
+        </nav>
+        <div style={{ padding: "12px 14px", borderRadius: 11, background: "rgba(255,255,255,.03)", border: "1px solid rgba(255,255,255,.07)", marginTop: 12 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
+            <div style={{ width: 34, height: 34, borderRadius: "50%", background: "linear-gradient(135deg,#ff3b3b,#7f1414)", display: "grid", placeItems: "center", fontWeight: 700, color: "#fff", fontSize: 13, flexShrink: 0 }}>{initials}</div>
+            <div><div style={{ fontSize: 13, color: "#fff", fontWeight: 600 }}>{authUser.full_name}</div><div style={{ fontSize: 11, color: "#7a7a80" }}>{authUser.role}</div></div>
+          </div>
+          <button onClick={onLogout} style={{ fontSize: 12, color: "#8a8a90", display: "flex", alignItems: "center", gap: 6, background: "none", border: "none", cursor: "pointer", padding: 0 }}><LogOut size={13} /> Sign out</button>
+        </div>
+      </aside>
+
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <header style={{ position: "sticky", top: 0, zIndex: 20, height: 62, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 24px", borderBottom: "1px solid rgba(0,229,255,.07)", background: "rgba(5,8,22,.8)", backdropFilter: "blur(20px)" }}>
+          <h2 style={{ fontSize: 16, fontWeight: 700, color: "#fff" }}>My Dashboard</h2>
+          {notification && <div style={{ padding: "8px 16px", borderRadius: 9, fontSize: 13, background: notification.ok ? "rgba(126,231,135,.1)" : "rgba(255,30,30,.1)", border: `1px solid ${notification.ok ? "rgba(126,231,135,.3)" : "rgba(255,30,30,.3)"}`, color: notification.ok ? "#7ee787" : C.red }}>{notification.msg}</div>}
+        </header>
+        <main style={{ padding: 24 }}>
+          <div className="reveal" style={{ display: "grid", gridTemplateColumns: "300px 1fr", gap: 20, alignItems: "start" }} >
+            <div style={{ display: "grid", gap: 16 }}>
+              <Glass pad={24}>
+                <div style={{ textAlign: "center", marginBottom: 18 }}>
+                  <div style={{ width: 68, height: 68, borderRadius: "50%", background: "linear-gradient(135deg,#ff3b3b,#7f1414)", display: "grid", placeItems: "center", fontWeight: 800, color: "#fff", fontSize: 22, margin: "0 auto 12px", boxShadow: "0 0 28px rgba(255,30,30,.35)" }}>{initials}</div>
+                  <h3 style={{ fontSize: 17, marginBottom: 4 }}>{authUser.full_name}</h3>
+                  <p style={{ fontSize: 13, color: "#8a8a90" }}>{authUser.organization || "No organization"}</p>
+                  <p style={{ fontSize: 12, color: "#6a6a72", marginTop: 4 }}>{authUser.email}</p>
+                </div>
+                <div style={{ textAlign: "center", marginBottom: 14 }}>
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "4px 12px", borderRadius: 99, fontSize: 12, fontWeight: 700, background: authUser.role === "admin" ? "rgba(255,30,30,.12)" : "rgba(0,229,255,.08)", border: `1px solid ${authUser.role === "admin" ? "rgba(255,30,30,.3)" : "rgba(0,229,255,.2)"}`, color: authUser.role === "admin" ? C.red : C.cyan }}>
+                    {authUser.role === "admin" ? <ShieldAlert size={12} /> : <Shield size={12} />}
+                    {authUser.role === "admin" ? "Administrator" : "Researcher"}
+                  </span>
+                </div>
+                <button onClick={() => setEditing(!editing)} className="btn btn-ghost" style={{ width: "100%", justifyContent: "center", fontSize: 13 }}>{editing ? "Cancel" : "Edit Profile"}</button>
+                {editing && (
+                  <div style={{ marginTop: 14, display: "flex", flexDirection: "column", gap: 10 }}>
+                    <input value={editName} onChange={e => setEditName(e.target.value)} placeholder="Full name" style={{ padding: "10px 12px", borderRadius: 9, background: "rgba(255,255,255,.04)", border: "1px solid rgba(255,255,255,.1)", color: "#e8e8ea", fontSize: 13, outline: "none" }} />
+                    <input value={editOrg} onChange={e => setEditOrg(e.target.value)} placeholder="Organization" style={{ padding: "10px 12px", borderRadius: 9, background: "rgba(255,255,255,.04)", border: "1px solid rgba(255,255,255,.1)", color: "#e8e8ea", fontSize: 13, outline: "none" }} />
+                    <button onClick={saveProfile} className="btn btn-primary" style={{ justifyContent: "center", fontSize: 13 }}>Save</button>
+                  </div>
+                )}
+              </Glass>
+              <Glass pad={20}>
+                <div className="eyebrow" style={{ marginBottom: 12 }}>Your Stats</div>
+                {[{ label: "Documents Uploaded", value: data?.stats?.documents_uploaded ?? "—" }, { label: "AI Detections", value: data?.stats?.ai_detections ?? "—" }, { label: "Plagiarism Flags", value: data?.stats?.plagiarism_flags ?? "—" }].map(s => (
+                  <div key={s.label} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: "1px solid rgba(255,255,255,.05)" }}>
+                    <span style={{ fontSize: 13, color: "#9a9aa0" }}>{s.label}</span>
+                    <span style={{ fontSize: 18, fontWeight: 800, color: "#fff" }}>{s.value}</span>
+                  </div>
+                ))}
+              </Glass>
+            </div>
+            <Glass pad={0} style={{ overflow: "hidden" }}>
+              <div style={{ padding: "16px 18px 12px", borderBottom: "1px solid rgba(255,255,255,.06)" }}><h3 style={{ fontSize: 15 }}>Recent Documents</h3></div>
+              <table style={tbl}>
+                <thead><tr><th style={th}>Filename</th><th style={th}>Status</th><th style={th}>AI Score</th><th style={th}>Risk</th><th style={th}>Date</th></tr></thead>
+                <tbody>
+                  {(!data?.recent_documents || data.recent_documents.length === 0) && (
+                    <tr><td colSpan={5} style={{ ...td, textAlign: "center", color: "#5a5a60", padding: 32 }}>No documents yet — <button onClick={() => go("analyze")} style={{ color: C.red, background: "none", border: "none", cursor: "pointer", fontSize: 13 }}>start an analysis</button></td></tr>
+                  )}
+                  {(data?.recent_documents ?? []).map((d: any) => (
+                    <tr key={d.id}>
+                      <td style={{ ...td, fontWeight: 600, color: "#e8e8ea" }}>{d.filename}</td>
+                      <td style={td}><span style={{ padding: "2px 9px", borderRadius: 99, fontSize: 11, fontWeight: 700, background: d.status === "complete" ? "rgba(126,231,135,.1)" : "rgba(245,158,11,.1)", color: d.status === "complete" ? "#7ee787" : "#f59e0b", border: `1px solid ${d.status === "complete" ? "rgba(126,231,135,.3)" : "rgba(245,158,11,.3)"}` }}>{d.status}</span></td>
+                      <td style={{ ...td, fontFamily: "monospace", color: (d.aiScore ?? 0) >= 60 ? C.red : "#d4d4d8" }}>{d.aiScore ?? "—"}%</td>
+                      <td style={{ ...td, color: d.risk === "HIGH" || d.risk === "CRITICAL" ? C.red : "#8a8a90" }}>{d.risk ?? "—"}</td>
+                      <td style={{ ...td, fontSize: 12, color: "#6a6a72" }}>{d.createdAt ? new Date(d.createdAt * 1000).toLocaleDateString() : "—"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </Glass>
+          </div>
+        </main>
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================
    APP ROOT
    ============================================================ */
 const DEFAULT_APP_SETTINGS: Record<string, boolean> = {
@@ -4473,6 +5061,8 @@ export default function App() {
   const [docId, setDocId] = useState<string | null>(null);
   const [appSettings, setAppSettings] = useState<Record<string, boolean>>(DEFAULT_APP_SETTINGS);
   const [settingsNotif, setSettingsNotif] = useState<{ msg: string; ok: boolean } | null>(null);
+  const [authUser, setAuthUser] = useState<AuthUser | null>(() => getStoredAuth()?.user ?? null);
+  const [authToken, setAuthToken] = useState<string | null>(() => getStoredAuth()?.token ?? null);
 
   useEffect(() => { const t = setTimeout(() => setLoading(false), 1600); return () => clearTimeout(t); }, []);
 
@@ -4483,7 +5073,23 @@ export default function App() {
       .catch(() => {});
   }, []);
 
-  const go = (v) => { setView(v); window.scrollTo({ top: 0 }); };
+  const go = (v: string) => {
+    if ((v === "admin") && !authUser) { setView("auth"); window.scrollTo({ top: 0 }); return; }
+    if ((v === "user-dashboard") && !authUser) { setView("auth"); window.scrollTo({ top: 0 }); return; }
+    setView(v); window.scrollTo({ top: 0 });
+  };
+
+  const handleAuthSuccess = (token: string, user: AuthUser) => {
+    setAuthToken(token); setAuthUser(user);
+    go(user.role === "admin" ? "admin" : "user-dashboard");
+  };
+
+  const handleLogout = async () => {
+    if (authToken) {
+      try { await fetch(`${API}/api/auth/logout`, { method: "POST", headers: { Authorization: `Bearer ${authToken}` } }); } catch {}
+    }
+    clearAuth(); setAuthToken(null); setAuthUser(null); go("landing");
+  };
 
   const handleSettingToggle = async (key: string, value: boolean) => {
     const prev = appSettings;
@@ -4503,8 +5109,13 @@ export default function App() {
     setTimeout(() => setSettingsNotif(null), 3000);
   };
 
-  const isConsole = view !== "landing";
-  const page = {
+  const isLanding = view === "landing";
+  const isAuth = view === "auth";
+  const isAdmin = view === "admin";
+  const isUserDash = view === "user-dashboard";
+  const isConsole = !isLanding && !isAuth && !isAdmin && !isUserDash;
+
+  const page = ({
     dashboard: <Dashboard go={go} />,
     analyze: <DocAnalysis go={go} setDocId={setDocId} />,
     results: <Results go={go} docId={docId} />,
@@ -4513,7 +5124,7 @@ export default function App() {
     authorship: <Authorship docId={docId} />, crosslang: <CrossLang docId={docId} />,
     code: <CodeIntel docId={docId} />,
     settings: <SettingsPage settings={appSettings} onToggle={handleSettingToggle} notification={settingsNotif} />,
-  }[view];
+  } as Record<string, React.ReactNode>)[view];
 
   return (
     <div className="nuro">
@@ -4525,13 +5136,19 @@ export default function App() {
           .sidebar{ display:none !important; }
         }
       `}</style>
-      {!isConsole ? (
+      {isLanding && (
         <>
-          <TopNav go={go} />
+          <TopNav go={go} authUser={authUser} onLogout={handleLogout} />
           <Landing go={go} />
         </>
-      ) : (
-        <Shell view={view} go={go}>{page}</Shell>
+      )}
+      {isAuth && <AuthPage onSuccess={handleAuthSuccess} go={go} />}
+      {isAdmin && authUser && authToken && <AdminDashboardPage token={authToken} authUser={authUser} onLogout={handleLogout} go={go} />}
+      {isAdmin && !authUser && (() => { go("auth"); return null; })()}
+      {isUserDash && authUser && authToken && <UserDashboardPage token={authToken} authUser={authUser} onLogout={handleLogout} go={go} />}
+      {isUserDash && !authUser && (() => { go("auth"); return null; })()}
+      {isConsole && (
+        <Shell view={view} go={go} authUser={authUser} onLogout={handleLogout}>{page}</Shell>
       )}
     </div>
   );
