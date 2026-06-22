@@ -59,14 +59,18 @@ function useBackendHealth(): "checking" | "online" | "offline" {
   const [status, setStatus] = React.useState<"checking" | "online" | "offline">("checking");
   React.useEffect(() => {
     let active = true;
+    let failures = 0;
     const check = async () => {
       try {
-        const r = await fetch(`${API}/api/health`, { signal: AbortSignal.timeout(3000) });
-        if (active) setStatus(r.ok ? "online" : "offline");
-      } catch { if (active) setStatus("offline"); }
+        // 65s timeout to survive Render free-tier cold starts (~30-60s)
+        const r = await fetch(`${API}/api/health`, { signal: AbortSignal.timeout(65000) });
+        if (active) { failures = 0; setStatus(r.ok ? "online" : "offline"); }
+      } catch {
+        if (active) { failures++; if (failures >= 2) setStatus("offline"); }
+      }
     };
     check();
-    const id = setInterval(check, 12000);
+    const id = setInterval(check, 30000);
     return () => { active = false; clearInterval(id); };
   }, []);
   return status;
