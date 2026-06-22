@@ -30,7 +30,7 @@ const C = {
   neonGreen: "#00FFB2", orange: "#FF9E44",
 };
 
-const API = (import.meta.env.VITE_API_URL as string | undefined) ?? "http://localhost:4001";
+const API = (import.meta.env.VITE_API_URL as string | undefined) ?? "https://nuroai.onrender.com";
 
 // ── Diagnose why a fetch failed and return a human-readable message ──────────
 async function diagnoseError(e: any): Promise<string> {
