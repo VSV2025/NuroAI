@@ -220,7 +220,11 @@ def extract_text(doc: dict) -> dict:
 
     # ── PDF ──────────────────────────────────────────────────────────────────
     if ext == ".pdf":
-        import fitz
+        try:
+            import fitz
+        except ImportError:
+            logger.error("[ocr] pymupdf (fitz) not installed — cannot process PDF. Add pymupdf to requirements.")
+            return _fail("pymupdf_missing")
         try:
             pdf = fitz.open(path)
         except Exception as exc:

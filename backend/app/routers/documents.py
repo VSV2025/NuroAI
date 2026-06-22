@@ -16,8 +16,15 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
-UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "uploads")
-os.makedirs(UPLOAD_DIR, exist_ok=True)
+import tempfile as _tempfile
+_default_upload_dir = os.path.join(os.path.dirname(__file__), "..", "..", "uploads")
+try:
+    os.makedirs(_default_upload_dir, exist_ok=True)
+    UPLOAD_DIR = _default_upload_dir
+except OSError:
+    UPLOAD_DIR = os.path.join(_tempfile.gettempdir(), "nuroai_uploads")
+    os.makedirs(UPLOAD_DIR, exist_ok=True)
+    logger.warning(f"[upload] app dir not writable, using UPLOAD_DIR={UPLOAD_DIR}")
 
 PER_STAGE_MS = 700
 
@@ -70,18 +77,37 @@ MAX_UPLOAD_BYTES = 25 * 1024 * 1024  # 25 MB
 @router.post("/upload")
 def upload(file: UploadFile = File(...)):
     filename = os.path.basename(file.filename or "upload")
-    raw  = file.file.read()
-    if len(raw) > MAX_UPLOAD_BYTES:
-        raise HTTPException(413, f"File too large — maximum allowed size is 25 MB")
+    content_type = file.content_type or "unknown"
+    logger.info(f"[upload] receiving: filename={filename} content_type={content_type}")
+    try:
+        raw = file.file.read()
+    except Exception as exc:
+        logger.error(f"[upload] failed to read file body: {exc}")
+        raise HTTPException(400, f"Could not read uploaded file: {exc}")
+
+    size = len(raw)
+    logger.info(f"[upload] received {size} bytes for {filename}")
+
+    if size == 0:
+        raise HTTPException(400, "Uploaded file is empty")
+    if size > MAX_UPLOAD_BYTES:
+        raise HTTPException(413, "File too large — maximum allowed size is 25 MB")
+
     path = os.path.join(UPLOAD_DIR, f"{uuid.uuid4()}_{filename}")
-    with open(path, "wb") as fh:
-        fh.write(raw)
+    try:
+        with open(path, "wb") as fh:
+            fh.write(raw)
+        logger.info(f"[upload] saved to {path}")
+    except OSError as exc:
+        logger.error(f"[upload] cannot write to {path}: {exc}")
+        raise HTTPException(500, f"Server could not save file: {exc}")
 
     doc = save_document({
         "id": str(uuid.uuid4()), "filename": filename, "path": path,
-        "size": len(raw), "status": "uploaded",
+        "size": size, "status": "uploaded",
         "startedAt": None, "createdAt": time.time(),
     })
+    logger.info(f"[upload] saved document id={doc['id']}")
     return {"documentId": doc["id"], "filename": doc["filename"], "size": doc["size"]}
 
 

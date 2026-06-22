@@ -46,9 +46,10 @@ async function diagnoseError(e: any): Promise<string> {
     }
   }
   if (raw.includes("413")) return "File too large — maximum allowed size is 25 MB.";
-  if (raw.includes("422")) return "Invalid file or unsupported format — check the file type.";
-  if (raw.includes("500")) return "Analysis engine error — check backend logs.";
-  if (raw.includes("upload failed")) return "Upload rejected — verify file type (PDF, DOCX, TXT, ZIP) and size.";
+  if (raw.includes("422")) return "Invalid file or unsupported format — the backend could not parse the request.";
+  if (raw.includes("500")) return `Upload error (server 500) — ${e?.message ?? "check backend logs"}.`;
+  if (raw.includes("400")) return `Upload rejected (400) — ${e?.message ?? "bad request"}.`;
+  if (raw.includes("upload failed")) return `Upload failed — ${e?.message ?? "backend returned an error. Please retry."}`;
   if (raw.includes("timeout")) return "Request timed out — backend may be overloaded.";
   if (raw.includes("cors")) return "CORS restriction — backend origin policy mismatch.";
   return `Error: ${e?.message ?? e}`;
@@ -3703,7 +3704,11 @@ function DocAnalysis({ go, setDocId }) {
       const form = new FormData();
       form.append("file", fileObj);
       const uploadRes = await fetch(`${API}/api/documents/upload`, { method: "POST", body: form });
-      if (!uploadRes.ok) throw new Error("Upload failed");
+      if (!uploadRes.ok) {
+        let detail = "";
+        try { detail = (await uploadRes.json()).detail ?? ""; } catch { /* non-JSON body */ }
+        throw new Error(`Upload failed: HTTP ${uploadRes.status}${detail ? ` — ${detail}` : ""}`);
+      }
       const { documentId } = await uploadRes.json();
       setDocId(documentId);
 
