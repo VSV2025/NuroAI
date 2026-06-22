@@ -139,17 +139,74 @@ def _detect_code(text: str) -> dict:
     matches = sum(1 for p in _CODE_PATTERNS if re.search(p, text, re.MULTILINE))
     if matches < 2:
         return {"status": "NO_CODE_DETECTED", "score": 0}
-    direct_score = detect_direct(text)["score"]
-    return {
-        "status":          "ok",
-        "codeSimilarity":  direct_score,
-        "logicSimilarity": min(100, direct_score + 5),
-        "astMatch":        direct_score,
-        "structure":       min(100, direct_score + 2),
-        "renameEvasion":   direct_score > 60,
-        "note":            f"Code patterns detected ({matches} signatures). Direct similarity: {direct_score}%.",
-        "score":           direct_score,
-    }
+
+    # Use real code tokenization and analysis (not n-gram plagiarism score)
+    try:
+        from ..routers.code import tokenize as code_tokenize, normalize as code_normalize, shingles, structure as code_structure
+        from ..services.text_features import jaccard
+
+        # Compare code against itself normalized to detect self-similarity baseline
+        # and compare against reference corpus entries that may contain code
+        code_refs = [r["text"] for r in REFERENCE_CORPUS if
+                     sum(1 for p in _CODE_PATTERNS if re.search(p, r["text"], re.MULTILINE)) >= 2]
+
+        lt = code_tokenize(text)
+        norm_l = code_normalize(lt)
+        struct_l = code_structure(lt)
+
+        if code_refs:
+            best_raw = 0.0
+            best_norm = 0.0
+            best_struct = 0.0
+            for ref_text in code_refs[:5]:
+                rt = code_tokenize(ref_text)
+                norm_r = code_normalize(rt)
+                struct_r = code_structure(rt)
+                raw_sim   = jaccard(shingles(lt),      shingles(rt))
+                norm_sim  = jaccard(shingles(norm_l),  shingles(norm_r))
+                str_sim   = jaccard(struct_l,           struct_r)
+                best_raw   = max(best_raw,   raw_sim)
+                best_norm  = max(best_norm,  norm_sim)
+                best_struct = max(best_struct, str_sim)
+        else:
+            # No code in reference corpus — use direct text similarity as proxy
+            direct_score = detect_direct(text)["score"]
+            best_raw = direct_score / 100
+            best_norm = best_raw
+            best_struct = best_raw * 0.9
+
+        rename_evasion = (best_norm - best_raw) > 0.25
+        code_sim   = pct(best_norm  * 100)
+        logic_sim  = pct(best_struct * 100)
+        ast_match  = pct(((best_norm + best_struct) / 2) * 100)
+
+        return {
+            "status":          "ok",
+            "codeSimilarity":  code_sim,
+            "logicSimilarity": logic_sim,
+            "astMatch":        ast_match,
+            "structure":       logic_sim,
+            "renameEvasion":   rename_evasion,
+            "note":            (
+                f"Code detected ({matches} signatures). Token similarity: {code_sim}%, "
+                f"structure: {logic_sim}%."
+                + (" Rename-evasion pattern detected." if rename_evasion else "")
+            ),
+            "score": code_sim,
+        }
+    except Exception as exc:
+        logger.warning(f"[code_intel] advanced analysis failed: {exc}, falling back to n-gram")
+        direct_score = detect_direct(text)["score"]
+        return {
+            "status":          "ok",
+            "codeSimilarity":  direct_score,
+            "logicSimilarity": min(100, direct_score + 5),
+            "astMatch":        direct_score,
+            "structure":       min(100, direct_score + 2),
+            "renameEvasion":   direct_score > 60,
+            "note":            f"Code patterns detected ({matches} signatures). N-gram similarity: {direct_score}%.",
+            "score":           direct_score,
+        }
 
 
 # ── Explainability ────────────────────────────────────────────────────────────

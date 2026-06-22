@@ -4405,8 +4405,12 @@ function LanguageConstellationSystem({ data }: { data: any }) {
       borderRadius: 16, border: '1px solid rgba(255,255,255,0.06)', padding: '20px 20px 8px',
       marginBottom: 16, position: 'relative',
       boxShadow: '0 0 60px rgba(100,200,255,0.04), inset 0 1px 0 rgba(255,255,255,0.04)' }}>
-      <div style={{ fontSize: 10, color: '#4cc9ff', letterSpacing: '.2em', marginBottom: 10,
-        fontFamily: "'JetBrains Mono',monospace", opacity: 0.7 }}>LANGUAGE CONSTELLATION SYSTEM</div>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+        <div style={{ fontSize: 10, color: '#4cc9ff', letterSpacing: '.2em',
+          fontFamily: "'JetBrains Mono',monospace", opacity: 0.7 }}>LANGUAGE CONSTELLATION SYSTEM</div>
+        <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.25)', fontFamily: "'JetBrains Mono',monospace",
+          letterSpacing: '.08em' }}>● Primary nodes: live data &nbsp;◦ Secondary nodes: illustrative</div>
+      </div>
       <svg width="100%" viewBox="0 0 700 400" style={{ overflow: 'visible',
         opacity: phase === 'hidden' ? 0 : 1, transition: 'opacity 0.8s ease' }}>
         <defs>

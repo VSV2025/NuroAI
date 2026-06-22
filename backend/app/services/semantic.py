@@ -61,9 +61,34 @@ def detect_idea_plagiarism(text: str) -> dict:
             "concepts": concepts,
         }
     except Exception as exc:
+        # Fallback: TF-IDF cosine similarity against reference corpus (no ML model needed)
+        try:
+            from sklearn.feature_extraction.text import TfidfVectorizer
+            from sklearn.metrics.pairwise import cosine_similarity as sk_cos
+            corpus_texts = [r["text"] for r in REFERENCE_CORPUS]
+            if corpus_texts:
+                vect = TfidfVectorizer(ngram_range=(1, 2), max_features=5000)
+                target = text[:2000]
+                all_texts = [target] + corpus_texts
+                mat = vect.fit_transform(all_texts)
+                sims = sk_cos(mat[0:1], mat[1:])[0]
+                best_idx = int(sims.argmax())
+                best_sim = float(sims[best_idx])
+                best_src = REFERENCE_CORPUS[best_idx]["source"]
+                score = pct(best_sim * 140)
+                return {
+                    "score": score,
+                    "confidence": 60,
+                    "evidence": f"TF-IDF similarity {best_sim:.2f} against '{best_src}' (embedding model unavailable: {exc}).",
+                    "reasoning": "Fallback: TF-IDF n-gram cosine similarity used (sentence-transformers unavailable).",
+                    "source": best_src,
+                    "concepts": [],
+                }
+        except Exception as fallback_exc:
+            pass
         return {
-            "score": 33,
-            "confidence": 55,
-            "evidence": f"Model unavailable: {exc}",
-            "reasoning": "Fallback: semantic model could not be loaded.",
+            "score": 0,
+            "confidence": 40,
+            "evidence": f"Semantic model unavailable: {exc}",
+            "reasoning": "Fallback computation also failed — no semantic score available.",
         }
