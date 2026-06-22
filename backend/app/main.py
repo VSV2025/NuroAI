@@ -13,6 +13,7 @@ def create_app() -> FastAPI:
         title="NuroAI Backend",
         description="Plagiarism intelligence platform API (FastAPI + MongoDB)",
         version="1.0.0",
+        redirect_slashes=False,  # prevent 307 redirects that browsers may downgrade to GET
     )
 
     app.add_middleware(
