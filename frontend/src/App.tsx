@@ -184,6 +184,10 @@ function GlobalStyle() {
       @keyframes particleOrbit { 0%{opacity:0;transform:rotate(var(--pa,0deg)) translateX(var(--pr,170px)) scale(0);} 25%{opacity:.85;} 75%{opacity:.5;} 100%{opacity:0;transform:rotate(calc(var(--pa,0deg) + 30deg)) translateX(var(--pr,170px)) scale(.5);} }
       @keyframes rimGlow { 0%,100%{opacity:.45;} 50%{opacity:.82;} }
       @keyframes docRingPulse { 0%,100%{opacity:.38; transform:translate(-50%,-50%) scale(1);} 50%{opacity:.72; transform:translate(-50%,-50%) scale(1.04);} }
+      @keyframes PlanetBreath { 0%,100%{transform:scale(1);opacity:1;} 50%{transform:scale(1.04);opacity:.92;} }
+      @keyframes EnergyFlow { 0%{stroke-dashoffset:0;} 100%{stroke-dashoffset:-48;} }
+      @keyframes NodeGlow { 0%,100%{filter:brightness(1);} 50%{filter:brightness(1.3);} }
+      @keyframes GalaxyFloat { 0%,100%{transform:translate3d(0,0,0);} 50%{transform:translate3d(0,-8px,0);} }
 
       .reveal { animation:floatUp .7s cubic-bezier(.2,.7,.2,1) both; }
       .pulse { animation:glowPulse 2.6s ease-in-out infinite; }
@@ -1850,6 +1854,7 @@ function GalaxyCanvas2D({ clusters, docColor, hovered, setHovered }: any) {
   const bgStars = useMemo(() => Array.from({ length: 260 }, () => ({
     x: Math.random(), y: Math.random(), r: Math.random() * 1.1 + 0.2,
     a: Math.random() * 0.5 + 0.08, sp: Math.random() * 0.007 + 0.002,
+    hue: Math.random() > 0.82 ? "#c8d8ff" : "#ffffff",
   })), []);
   const fgStars = useMemo(() => Array.from({ length: 90 }, () => ({
     x: Math.random(), y: Math.random(), r: Math.random() * 1.8 + 0.6,
@@ -1933,8 +1938,7 @@ function GalaxyCanvas2D({ clusters, docColor, hovered, setHovered }: any) {
       // BG stars (slow parallax)
       for (const s of bgStars) {
         ctx.globalAlpha = Math.max(0.05, Math.min(0.78, s.a + Math.sin(t * s.sp * 8) * 0.24));
-        const hue = Math.random() > 0.82 ? "#c8d8ff" : "#ffffff";
-        ctx.fillStyle = hue;
+        ctx.fillStyle = s.hue;
         ctx.beginPath(); ctx.arc(s.x * W, s.y * H, s.r, 0, Math.PI * 2); ctx.fill();
       }
       // Bright twinkling stars layer — premium shimmer
@@ -4418,29 +4422,56 @@ function CrossLang({ docId }: { docId: string | null }) {
         <Glass pad={24} style={{ position: "relative", minHeight: 420 }}>
           <h3 style={{ fontSize: 16, marginBottom: 8 }}>Language relationship graph</h3>
           <div style={{ position: "relative", width: "100%", height: 360 }}>
-            <svg viewBox="0 0 100 100" preserveAspectRatio="none" style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}>
+            <svg viewBox="0 0 100 100" preserveAspectRatio="none" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", overflow: "visible" }}>
+              <defs>
+                {langs.map((l, i) => {
+                  const tCol = getLangColor(l.code);
+                  const op = Math.max(0.25, l.sim / 100);
+                  return (
+                    <linearGradient key={`g${i}`} id={`lg${i}`} x1="50" y1="50" x2={l.x} y2={l.y} gradientUnits="userSpaceOnUse">
+                      <stop offset="0%"   stopColor="#FF4444" stopOpacity={op}/>
+                      <stop offset="48%"  stopColor="white"   stopOpacity={Math.min(op, 0.55)}/>
+                      <stop offset="100%" stopColor={tCol}    stopOpacity={op}/>
+                    </linearGradient>
+                  );
+                })}
+              </defs>
               {langs.map((l, i) => {
                 const w = l.sim / 100;
-                const sw = Math.max(0.5, w * 5);
-                const op = 0.25 + w * 0.75;
-                const col = l.sim > 70
-                  ? `rgba(220,38,38,${op})`
-                  : l.sim > 40
-                    ? `rgba(100,150,255,${op})`
-                    : `rgba(160,160,180,${Math.max(0.15, op * 0.5)})`;
+                const sw = Math.max(0.35, w * 4.5);
                 const mx = (50 + l.x) / 2, my = (50 + l.y) / 2;
+                const tCol = getLangColor(l.code);
+                const pathD = `M 50 50 L ${l.x} ${l.y}`;
                 return (
                   <g key={i}>
-                    <line x1="50" y1="50" x2={l.x} y2={l.y} stroke={col}
-                      strokeWidth={sw} strokeDasharray="4 3"
-                      style={{ filter: l.sim > 50 ? `drop-shadow(0 0 ${Math.round(w*4)}px ${col})` : "none" }} />
+                    {/* Soft glow blur layer */}
+                    <line x1="50" y1="50" x2={l.x} y2={l.y}
+                      stroke={`url(#lg${i})`} strokeWidth={sw * 3} opacity={0.1}
+                      style={{ filter: `blur(2px)` }}/>
+                    {/* Main edge */}
+                    <line x1="50" y1="50" x2={l.x} y2={l.y}
+                      stroke={`url(#lg${i})`} strokeWidth={sw}
+                      strokeDasharray={l.sim > 50 ? undefined : "3 4"}
+                      style={{ animation: l.sim <= 50 ? 'dashFlow 1.8s linear infinite' : undefined }}/>
+                    {/* Midpoint sim label */}
                     {l.sim > 0 && (
-                      <text x={mx} y={my} textAnchor="middle" dominantBaseline="middle"
-                        fill="rgba(255,255,255,0.7)" fontSize="4" fontFamily="monospace"
-                        style={{ filter: "drop-shadow(0 0 2px rgba(0,0,0,0.8))" }}>
-                        {l.sim}%
-                      </text>
+                      <g>
+                        <rect x={mx - 4.5} y={my - 3} width="9" height="6" rx="1.5"
+                          fill="rgba(0,0,0,0.75)" stroke={`${tCol}55`} strokeWidth="0.4"/>
+                        <text x={mx} y={my + 1.2} textAnchor="middle" dominantBaseline="middle"
+                          fill="white" fontSize="3" fontFamily="monospace" fontWeight="700">
+                          {l.sim}%
+                        </text>
+                      </g>
                     )}
+                    {/* Traveling particle A */}
+                    <circle r="0.9" fill="white" opacity={0.8 * w}>
+                      {React.createElement('animateMotion' as any, { dur: `${2.2 + i * 0.35}s`, repeatCount: "indefinite", path: pathD })}
+                    </circle>
+                    {/* Traveling particle B (offset) */}
+                    <circle r="0.7" fill={tCol} opacity={0.65 * w}>
+                      {React.createElement('animateMotion' as any, { dur: `${2.2 + i * 0.35}s`, repeatCount: "indefinite", begin: `${(2.2 + i * 0.35) * 0.5}s`, path: pathD })}
+                    </circle>
                   </g>
                 );
               })}
@@ -4456,16 +4487,31 @@ function CrossLang({ docId }: { docId: string | null }) {
     </div>
   );
 }
-function Node({ x, y, label, center, sim }) {
+const LANG_COLORS: Record<string, string> = {
+  en: '#FF4444', es: '#FF8C00', fr: '#3B82F6', de: '#22C55E',
+  ar: '#EAB308', hi: '#A855F7', ta: '#06B6D4', zh: '#F8FAFC',
+  ja: '#EC4899', ko: '#8B5CF6', pt: '#10B981', it: '#F97316',
+  ru: '#6366F1', nl: '#14B8A6',
+};
+const getLangColor = (code: string) => LANG_COLORS[code.toLowerCase()] ?? '#94A3B8';
+
+function Node({ x, y, label, center, sim }: { x: number; y: number; label: string; center?: boolean; sim: number }) {
   const size = center ? 64 : 50;
+  const col = center ? '#FF4444' : getLangColor(label);
   return (
     <div style={{ position: "absolute", left: `${x}%`, top: `${y}%`, transform: "translate(-50%,-50%)", textAlign: "center" }}>
-      <div className={center ? "pulse" : ""} style={{ width: size, height: size, borderRadius: "50%", display: "grid", placeItems: "center",
-        background: center ? "linear-gradient(135deg,#ff3b3b,#7f1414)" : "rgba(255,255,255,.05)",
-        border: `1.5px solid ${center || sim > 70 ? "rgba(255,30,30,.6)" : "rgba(255,255,255,.18)"}`,
-        boxShadow: center ? "0 0 24px rgba(255,30,30,.5)" : sim > 70 ? "0 0 14px rgba(255,30,30,.3)" : "none",
-        fontWeight: 700, color: "#fff", fontSize: center ? 18 : 14 }}><span className="mono">{label}</span></div>
-      {!center && <div style={{ fontSize: 10, color: "#8a8a90", marginTop: 4 }}>{sim}%</div>}
+      <div className={center ? "pulse" : ""}
+        style={{ width: size, height: size, borderRadius: "50%", display: "grid", placeItems: "center",
+          background: `radial-gradient(circle at 35% 30%, rgba(255,255,255,0.35) 0%, ${col} 45%, ${col}77 100%)`,
+          border: `1.5px solid ${col}99`,
+          boxShadow: `0 0 ${center ? 28 : 16}px ${col}99, 0 0 ${center ? 56 : 28}px ${col}33, inset -2px -2px 6px rgba(0,0,0,0.45), inset 1px 1px 4px rgba(255,255,255,0.18)`,
+          fontWeight: 700, color: "#fff", fontSize: center ? 18 : 14,
+          willChange: "transform",
+          animation: `PlanetBreath ${2.4 + (sim % 7) * 0.25}s ease-in-out infinite` }}>
+        <span className="mono">{label}</span>
+      </div>
+      {!center && <div style={{ fontSize: 10, color: col, marginTop: 4, fontFamily: "'JetBrains Mono',monospace",
+        textShadow: `0 0 6px ${col}88` }}>{sim}%</div>}
     </div>
   );
 }
