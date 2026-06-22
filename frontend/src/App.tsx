@@ -42,7 +42,7 @@ async function diagnoseError(e: any): Promise<string> {
       if (r.ok) return "Server returned an error — please retry.";
       return `Analysis engine returned HTTP ${r.status} — backend may be starting up.`;
     } catch {
-      return "Backend service unavailable — start the NuroAI backend on port 4001 and retry.";
+      return "Backend service unavailable — it may be waking up (Render free tier takes ~30s). Please retry.";
     }
   }
   if (raw.includes("413")) return "File too large — maximum allowed size is 25 MB.";
@@ -3753,7 +3753,7 @@ function DocAnalysis({ go, setDocId }) {
             </div>
             <div style={{ fontSize: 12, color: "#7a7a80", marginTop: 2 }}>
               {health === "offline"
-                ? "Start the NuroAI backend: python -m uvicorn app.main:app --host 0.0.0.0 --port 4001"
+                ? "Backend is waking up — Render free tier takes ~30s on first request. Refresh in a moment."
                 : "Please wait while the engine initializes."}
             </div>
           </div>
