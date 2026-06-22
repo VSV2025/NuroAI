@@ -142,14 +142,14 @@ def _script_languages(text: str) -> list:
     if any('֐' <= c <= '׿' for c in sample):
         detected.append("he")
 
-    if sum(1 for c in sample if c in 'ñÑ¿¡áéíóúÁÉÍÓÚ') >= 5:
+    if sum(1 for c in sample if c in 'ñÑ¿¡áéíóúÁÉÍÓÚ') >= 2:
         detected.append("es")
 
     fr_chars = sum(1 for c in sample if c in 'àâæçèéêëîïôœùûüÿÀÂÆÇÈÉÊËÎÏÔŒÙÛÜŸ')
-    if fr_chars >= 5 and "es" not in detected:
+    if fr_chars >= 2 and "es" not in detected:
         detected.append("fr")
 
-    if sum(1 for c in sample if c in 'äöüÄÖÜß') >= 5:
+    if sum(1 for c in sample if c in 'äöüÄÖÜß') >= 2:
         detected.append("de")
 
     logger.info(f"[multilingual] script analysis: {detected}")
