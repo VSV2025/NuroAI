@@ -329,15 +329,21 @@ def crosslang_detail(doc_id: str):
     top = lang_items[0] if lang_items else {"name": "Unknown", "code": "??", "sim": 0}
 
     return {
-        "documentId":            doc_id,
-        "status":                cross_status,
-        "overallScore":          base_score,
-        "evidence":              cross.get("evidence", ""),
-        "sourceLanguage":        "English (EN)",
-        "targetLanguage":        f"{top['name']} ({top['code']})",
-        "translationSimilarity": top["sim"],
-        "semanticSimilarity":    round(cosine_max, 2),
-        "langs":                 lang_items,
+        "documentId":               doc_id,
+        "status":                   cross_status,
+        "overallScore":             base_score,
+        "evidence":                 cross.get("evidence", ""),
+        "sourceLanguage":           "English (EN)",
+        "targetLanguage":           f"{top['name']} ({top['code']})",
+        "translationSimilarity":    top["sim"],
+        "semanticSimilarity":       round(cosine_max, 2),
+        "langs":                    lang_items,
+        "embeddingSimilarity":      round(cross.get("embedding_similarity", cosine_max) * 100),
+        "translationAlignment":     round(cross.get("translation_similarity", cosine_max) * 100),
+        "structureSimilarity":      round(cross.get("structure_similarity", 0) * 100),
+        "keywordPreservation":      round(cross.get("keyword_preservation", 0) * 100),
+        "finalCrossLanguageScore":  round(cross.get("final_cross_language_score", base_score)),
+        "reasoning":                cross.get("evidence", ""),
     }
 
 

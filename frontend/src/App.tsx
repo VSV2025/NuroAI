@@ -3324,7 +3324,12 @@ function NeuralEvidenceChamber({ docId }: { docId: string | null }) {
       signals: [
         `✓ ${crosslang?.sourceLanguage ?? "English (EN)"}`,
         `✓ Target: ${crosslang?.targetLanguage ?? "N/A"}`,
-        `✓ Score: ${crosslang?.overallScore ?? 0}%`,
+        `✓ Embedding: ${crosslang?.embeddingSimilarity ?? crosslang?.overallScore ?? 0}%`,
+        crosslang?.status === "LANGUAGE_NOT_PRESENT"
+          ? "✓ No foreign-language content detected"
+          : (crosslang?.finalCrossLanguageScore ?? crosslang?.overallScore ?? 0) > 60
+            ? `High semantic alignment detected — multilingual embeddings indicate equivalent meaning despite language transformation`
+            : `Cross-language analysis complete — Score: ${crosslang?.finalCrossLanguageScore ?? crosslang?.overallScore ?? 0}%`,
       ],
     },
     {
@@ -4333,6 +4338,63 @@ function CrossLang({ docId }: { docId: string | null }) {
           </p>
         </Glass>
       ) : (
+      <>
+      {/* ── Language pair badge + final score ── */}
+      <Glass pad={20} style={{ marginBottom: 16, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
+        <div>
+          <div className="eyebrow" style={{ marginBottom: 4 }}>Language Pair Detected</div>
+          <div style={{ fontSize: 22, fontWeight: 800, fontFamily: "'JetBrains Mono',monospace", color: "#e8e8ff",
+            textShadow: "0 0 12px rgba(180,180,255,0.4)" }}>
+            {data?.sourceLanguage ?? "EN"} ↔ {data?.targetLanguage ?? "—"}
+          </div>
+        </div>
+        <div style={{ textAlign: "center" }}>
+          <div style={{ fontSize: 42, fontWeight: 900, fontFamily: "'JetBrains Mono',monospace",
+            color: (data?.finalCrossLanguageScore ?? data?.overallScore ?? 0) > 60 ? C.red : "#9a9aa0",
+            textShadow: `0 0 20px ${(data?.finalCrossLanguageScore ?? 0) > 60 ? "rgba(220,38,38,0.6)" : "rgba(150,150,160,0.3)"}` }}>
+            {data?.finalCrossLanguageScore ?? data?.overallScore ?? 0}%
+          </div>
+          <div style={{ fontSize: 10, color: "rgba(255,255,255,0.4)", letterSpacing: ".15em" }}>FINAL CROSS-LANGUAGE SCORE</div>
+        </div>
+      </Glass>
+
+      {/* ── 4-metric animated gauges ── */}
+      <Glass pad={20} style={{ marginBottom: 16 }}>
+        <div className="eyebrow" style={{ marginBottom: 16 }}>Multilingual Intelligence Metrics</div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 8 }}>
+          {[
+            { val: data?.embeddingSimilarity ?? 0,   label: "EMBEDDING SIM",     color: "#4cc9ff" },
+            { val: data?.translationAlignment ?? 0,  label: "TRANSLATION ALIGN", color: "#a78bfa" },
+            { val: data?.structureSimilarity ?? 0,   label: "STRUCTURE SIM",     color: "#34d399" },
+            { val: data?.keywordPreservation ?? 0,   label: "KEYWORD PRESERVE",  color: C.red },
+          ].map(({ val, label, color }) => {
+            const r = 28, circ = 2 * Math.PI * r;
+            const dash = (val / 100) * circ;
+            return (
+              <div key={label} style={{ textAlign: "center", padding: "8px 4px" }}>
+                <svg width="72" height="72" style={{ transform: "rotate(-90deg)", display: "block", margin: "0 auto" }}>
+                  <circle cx="36" cy="36" r={r} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="4"/>
+                  <circle cx="36" cy="36" r={r} fill="none" stroke={color} strokeWidth="4"
+                    strokeDasharray={`${dash} ${circ}`} strokeLinecap="round"
+                    style={{ transition: "stroke-dasharray 1.2s cubic-bezier(0.4,0,0.2,1)",
+                      filter: `drop-shadow(0 0 6px ${color})` }}/>
+                </svg>
+                <div style={{ fontSize: 18, fontWeight: 800, fontFamily: "'JetBrains Mono',monospace",
+                  color, marginTop: 2, textShadow: `0 0 10px ${color}88` }}>{val}%</div>
+                <div style={{ fontSize: 9, color: "rgba(255,255,255,0.4)", letterSpacing: ".1em", marginTop: 2 }}>{label}</div>
+              </div>
+            );
+          })}
+        </div>
+        {data?.evidence && (
+          <div style={{ marginTop: 16, padding: "12px 16px", background: "rgba(255,255,255,0.03)",
+            border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8,
+            fontSize: 12, color: "rgba(255,255,255,0.55)", lineHeight: 1.6 }}>
+            {data.evidence}
+          </div>
+        )}
+      </Glass>
+
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1.3fr", gap: 16 }} className="dash-row">
         <div style={{ display: "grid", gap: 12, alignContent: "start" }}>
           <Glass pad={20}>
@@ -4352,15 +4414,36 @@ function CrossLang({ docId }: { docId: string | null }) {
           ))}
         </div>
 
-        {/* language relationship graph */}
+        {/* language relationship graph — edge thickness/glow driven by similarity */}
         <Glass pad={24} style={{ position: "relative", minHeight: 420 }}>
           <h3 style={{ fontSize: 16, marginBottom: 8 }}>Language relationship graph</h3>
           <div style={{ position: "relative", width: "100%", height: 360 }}>
             <svg viewBox="0 0 100 100" preserveAspectRatio="none" style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}>
-              {langs.map((l, i) => (
-                <line key={i} x1="50" y1="50" x2={l.x} y2={l.y} stroke={l.sim > 70 ? C.red : "rgba(180,180,190,.4)"}
-                  strokeWidth={l.sim / 60} strokeDasharray="4 3" style={{ filter: l.sim > 70 ? "drop-shadow(0 0 3px rgba(255,30,30,.6))" : "none" }} />
-              ))}
+              {langs.map((l, i) => {
+                const w = l.sim / 100;
+                const sw = Math.max(0.5, w * 5);
+                const op = 0.25 + w * 0.75;
+                const col = l.sim > 70
+                  ? `rgba(220,38,38,${op})`
+                  : l.sim > 40
+                    ? `rgba(100,150,255,${op})`
+                    : `rgba(160,160,180,${Math.max(0.15, op * 0.5)})`;
+                const mx = (50 + l.x) / 2, my = (50 + l.y) / 2;
+                return (
+                  <g key={i}>
+                    <line x1="50" y1="50" x2={l.x} y2={l.y} stroke={col}
+                      strokeWidth={sw} strokeDasharray="4 3"
+                      style={{ filter: l.sim > 50 ? `drop-shadow(0 0 ${Math.round(w*4)}px ${col})` : "none" }} />
+                    {l.sim > 0 && (
+                      <text x={mx} y={my} textAnchor="middle" dominantBaseline="middle"
+                        fill="rgba(255,255,255,0.7)" fontSize="4" fontFamily="monospace"
+                        style={{ filter: "drop-shadow(0 0 2px rgba(0,0,0,0.8))" }}>
+                        {l.sim}%
+                      </text>
+                    )}
+                  </g>
+                );
+              })}
             </svg>
             {/* center */}
             <Node x={50} y={50} label="EN" center sim={100} />
@@ -4368,6 +4451,7 @@ function CrossLang({ docId }: { docId: string | null }) {
           </div>
         </Glass>
       </div>
+      </>
       )}
     </div>
   );
