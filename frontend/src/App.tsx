@@ -3174,9 +3174,7 @@ function LanguageGalaxy({ docId }: { docId: string | null }) {
             </div>
           );
         })()}
-        <GalaxyErrorBoundary>
-          <GalaxyScene3D clusters={clusters} docColor={docColor} setHovered={setHovered} />
-        </GalaxyErrorBoundary>
+        <GalaxyCanvas2D clusters={clusters} docColor={docColor} hovered={hovered} setHovered={setHovered} />
       </Glass>
 
       {/* AI vs Human Meter — glassmorphism balance platform */}
@@ -4319,7 +4317,7 @@ function DNABar({ v }) {
 /* ============================================================
    LANGUAGE CONSTELLATION HELPERS
    ============================================================ */
-function RadarChart({ metrics }: { metrics: { label: string; value: number; color: string }[] }) {
+function IntelRadarChart({ metrics }: { metrics: { label: string; value: number; color: string }[] }) {
   const cx = 150, cy = 130, R = 90, n = metrics.length;
   const angleOf = (i: number) => (i / n) * Math.PI * 2 - Math.PI / 2;
   const pt = (i: number, r: number): [number, number] => [
@@ -4365,30 +4363,47 @@ function RadarChart({ metrics }: { metrics: { label: string; value: number; colo
 function LanguageConstellationSystem({ data }: { data: any }) {
   const [phase, setPhase] = React.useState<'hidden'|'nodes'|'connections'|'particles'>('hidden');
   const [hoveredNode, setHoveredNode] = React.useState<string | null>(null);
+  const [tick, setTick] = React.useState(0);
   React.useEffect(() => {
     const t1 = setTimeout(() => setPhase('nodes'), 120);
-    const t2 = setTimeout(() => setPhase('connections'), 750);
-    const t3 = setTimeout(() => setPhase('particles'), 1450);
+    const t2 = setTimeout(() => setPhase('connections'), 620);
+    const t3 = setTimeout(() => setPhase('particles'), 1100);
     return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
   }, []);
-  const bgParticles = React.useMemo(() =>
-    Array.from({ length: 28 }, (_, i) => ({
-      cx: 20 + (i * 47 % 660), cy: 20 + (i * 73 % 340),
-      r: 0.7 + (i % 3) * 0.55, opacity: 0.08 + (i % 5) * 0.05, dur: 2 + (i % 4),
+  React.useEffect(() => {
+    const id = setInterval(() => setTick(p => p + 1), 50);
+    return () => clearInterval(id);
+  }, []);
+  const bgStars = React.useMemo(() =>
+    Array.from({ length: 48 }, (_, i) => ({
+      cx: 12 + (i * 43 % 676), cy: 12 + (i * 71 % 456),
+      r: 0.5 + (i % 3) * 0.45, opacity: 0.05 + (i % 6) * 0.04, dur: 2 + (i % 5),
     })), []);
-  const SEC = [
-    { id: 'fr', label: 'FR', color: '#3B82F6', cx: 215, cy: 75,  sim: 0.54, r: 17 },
-    { id: 'pt', label: 'PT', color: '#10B981', cx: 485, cy: 75,  sim: 0.48, r: 17 },
-    { id: 'de', label: 'DE', color: '#22C55E', cx: 105, cy: 310, sim: 0.41, r: 15 },
-    { id: 'it', label: 'IT', color: '#F97316', cx: 595, cy: 310, sim: 0.38, r: 15 },
-    { id: 'ar', label: 'AR', color: '#EAB308', cx: 350, cy: 55,  sim: 0.29, r: 13 },
-    { id: 'hi', label: 'HI', color: '#A855F7', cx: 175, cy: 360, sim: 0.26, r: 13 },
-  ];
-  const enCol = '#FF4444', esCol = '#FF8C00';
+
   const sim = Math.min(1, (data?.embeddingSimilarity ?? data?.overallScore ?? 0) / 100);
-  const edgeW = 1.5 + sim * 6;
-  const edgeOp = 0.3 + sim * 0.7;
   const tgtCode = (data?.targetLanguage ?? 'ES').replace(/[^A-Za-z]/g, '').substring(0, 2).toUpperCase() || 'ES';
+  const enCol = '#FF4444', tgtCol = '#FF8C00';
+  const edgeW = 1.8 + sim * 7;
+  const edgeOp = 0.28 + sim * 0.72;
+
+  // Layout: SVG 700×470. Core = (350,225). EN=(95,225). Target=(605,225).
+  const CX = 350, CY = 225, EN_X = 95, EN_Y = 225, TGT_X = 605, TGT_Y = 225;
+  const CORE_R = 22;
+
+  // 10 secondary language nodes filling the full space
+  const SEC = [
+    { id: 'zh', label: 'ZH', name: 'Chinese',    color: '#06B6D4', cx: 350, cy: 52,  sim: 0.52, r: 17, fam: 'Sino-Tibetan' },
+    { id: 'fr', label: 'FR', name: 'French',     color: '#3B82F6', cx: 178, cy: 72,  sim: 0.48, r: 16, fam: 'Romance' },
+    { id: 'de', label: 'DE', name: 'German',     color: '#22C55E', cx: 522, cy: 72,  sim: 0.41, r: 15, fam: 'Germanic' },
+    { id: 'ar', label: 'AR', name: 'Arabic',     color: '#EAB308', cx:  95, cy: 330, sim: 0.38, r: 15, fam: 'Semitic' },
+    { id: 'ja', label: 'JA', name: 'Japanese',   color: '#F97316', cx: 605, cy: 330, sim: 0.35, r: 15, fam: 'Japonic' },
+    { id: 'hi', label: 'HI', name: 'Hindi',      color: '#A855F7', cx: 215, cy: 405, sim: 0.30, r: 14, fam: 'Indo-Aryan' },
+    { id: 'pt', label: 'PT', name: 'Portuguese', color: '#10B981', cx: 485, cy: 405, sim: 0.26, r: 14, fam: 'Romance' },
+    { id: 'ko', label: 'KO', name: 'Korean',     color: '#F8FAFC', cx: 350, cy: 425, sim: 0.22, r: 13, fam: 'Koreanic' },
+    { id: 'ru', label: 'RU', name: 'Russian',    color: '#60A5FA', cx:  88, cy: 140, sim: 0.19, r: 12, fam: 'Slavic' },
+    { id: 'ta', label: 'TA', name: 'Tamil',      color: '#C084FC', cx: 612, cy: 140, sim: 0.17, r: 12, fam: 'Dravidian' },
+  ];
+
   const radarMetrics = [
     { label: 'TRANSLATION', value: data?.translationAlignment ?? data?.translationSimilarity ?? 0, color: '#a78bfa' },
     { label: 'SEMANTIC',    value: data?.embeddingSimilarity ?? 0,   color: '#4cc9ff' },
@@ -4400,159 +4415,250 @@ function LanguageConstellationSystem({ data }: { data: any }) {
     const order = ['hidden','nodes','connections','particles'];
     return order.indexOf(phase) >= order.indexOf(minPhase) ? 1 : 0;
   };
+  const t = tick * 0.05;
   return (
-    <div style={{ background: 'radial-gradient(ellipse at center, rgba(4,12,28,1) 0%, rgba(1,3,10,1) 100%)',
-      borderRadius: 16, border: '1px solid rgba(255,255,255,0.06)', padding: '20px 20px 8px',
+    <div style={{ background: 'radial-gradient(ellipse at 50% 40%, rgba(4,12,32,1) 0%, rgba(1,3,12,1) 100%)',
+      borderRadius: 16, border: '1px solid rgba(255,255,255,0.07)', padding: '18px 18px 10px',
       marginBottom: 16, position: 'relative',
-      boxShadow: '0 0 60px rgba(100,200,255,0.04), inset 0 1px 0 rgba(255,255,255,0.04)' }}>
+      boxShadow: '0 0 80px rgba(76,201,255,0.04), inset 0 1px 0 rgba(255,255,255,0.04)' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
         <div style={{ fontSize: 10, color: '#4cc9ff', letterSpacing: '.2em',
-          fontFamily: "'JetBrains Mono',monospace", opacity: 0.7 }}>LANGUAGE CONSTELLATION SYSTEM</div>
-        <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.25)', fontFamily: "'JetBrains Mono',monospace",
-          letterSpacing: '.08em' }}>● Primary nodes: live data &nbsp;◦ Secondary nodes: illustrative</div>
+          fontFamily: "'JetBrains Mono',monospace", opacity: 0.7 }}>MULTILINGUAL INTELLIGENCE NETWORK</div>
+        <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.22)', fontFamily: "'JetBrains Mono',monospace",
+          letterSpacing: '.08em' }}>● Primary: live data &nbsp;◦ Secondary: reference nodes</div>
       </div>
-      <svg width="100%" viewBox="0 0 700 400" style={{ overflow: 'visible',
-        opacity: phase === 'hidden' ? 0 : 1, transition: 'opacity 0.8s ease' }}>
+      <svg width="100%" viewBox="0 0 700 470" style={{ overflow: 'visible',
+        opacity: phase === 'hidden' ? 0 : 1, transition: 'opacity 0.9s ease' }}>
         <defs>
-          <pattern id="csgrid" width="40" height="40" patternUnits="userSpaceOnUse">
-            <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(100,200,255,0.025)" strokeWidth="0.5"/>
+          <pattern id="csgrid2" width="40" height="40" patternUnits="userSpaceOnUse">
+            <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(76,201,255,0.02)" strokeWidth="0.5"/>
           </pattern>
-          <filter id="csGB" x="-60%" y="-60%" width="220%" height="220%">
-            <feGaussianBlur stdDeviation="8" result="b"/>
+          <filter id="csGB2" x="-70%" y="-70%" width="240%" height="240%">
+            <feGaussianBlur stdDeviation="9" result="b"/>
             <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
           </filter>
-          <filter id="csGS" x="-40%" y="-40%" width="180%" height="180%">
-            <feGaussianBlur stdDeviation="4" result="b"/>
+          <filter id="csGS2" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="5" result="b"/>
             <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
           </filter>
-          <linearGradient id="csEdge" x1="0%" y1="0%" x2="100%" y2="0%">
+          <filter id="csBlur2" x="-30%" y="-30%" width="160%" height="160%">
+            <feGaussianBlur stdDeviation="3"/>
+          </filter>
+          <linearGradient id="csEdge2" x1="0%" y1="0%" x2="100%" y2="0%">
             <stop offset="0%"   stopColor={enCol} stopOpacity={edgeOp}/>
-            <stop offset="48%"  stopColor="white" stopOpacity={Math.min(edgeOp, 0.85)}/>
-            <stop offset="100%" stopColor={esCol} stopOpacity={edgeOp}/>
+            <stop offset="50%"  stopColor="white" stopOpacity={Math.min(edgeOp * 1.1, 0.9)}/>
+            <stop offset="100%" stopColor={tgtCol} stopOpacity={edgeOp}/>
           </linearGradient>
-          <path id="csMainP" d="M 130 148 L 570 148"/>
+          <radialGradient id="csCoreGrad" cx="40%" cy="35%" r="70%">
+            <stop offset="0%" stopColor="rgba(200,240,255,0.95)"/>
+            <stop offset="40%" stopColor="rgba(76,201,255,0.8)"/>
+            <stop offset="100%" stopColor="rgba(30,100,200,0.4)"/>
+          </radialGradient>
+          <path id="csMainPath2" d={`M ${EN_X} ${EN_Y} L ${TGT_X} ${TGT_Y}`}/>
         </defs>
-        <rect width="700" height="400" fill="url(#csgrid)"/>
-        {bgParticles.map((p, i) => (
-          <circle key={i} cx={p.cx} cy={p.cy} r={p.r} fill="rgba(150,180,255,0.6)" opacity={p.opacity}
-            style={{ animation: `glowPulse ${p.dur}s ease-in-out ${i * 0.15}s infinite` }}/>
+
+        {/* Background grid */}
+        <rect width="700" height="470" fill="url(#csgrid2)"/>
+
+        {/* Radial depth gradient */}
+        <radialGradient id="csDeptGrad" cx="50%" cy="48%" r="55%">
+          <stop offset="0%" stopColor="rgba(76,201,255,0.04)"/>
+          <stop offset="100%" stopColor="rgba(0,0,0,0)"/>
+        </radialGradient>
+        <rect width="700" height="470" fill="url(#csDeptGrad)"/>
+
+        {/* Background stars */}
+        {bgStars.map((s, i) => (
+          <circle key={i} cx={s.cx} cy={s.cy} r={s.r} fill="rgba(180,210,255,0.7)"
+            opacity={s.opacity + 0.03 * Math.sin(t * 1.2 + i)}/>
         ))}
-        {/* Secondary → EN thin connections */}
-        {SEC.map(l => (
-          <line key={`se-${l.id}`} x1="130" y1="148" x2={l.cx} y2={l.cy}
-            stroke={l.color} strokeWidth={0.4 + l.sim * 1.3} opacity={(0.12 + l.sim * 0.22) * show('connections')}
-            strokeDasharray="4 7" style={{ transition: 'opacity 0.6s ease', animation: 'dashFlow 2.2s linear infinite' }}/>
+
+        {/* Secondary node → Core faint web lines */}
+        {show('connections') === 1 && SEC.map((l, i) => (
+          <line key={`wl-${l.id}`} x1={l.cx} y1={l.cy} x2={CX} y2={CY}
+            stroke={l.color} strokeWidth={0.3 + l.sim * 0.8} opacity={0.07 + l.sim * 0.1}
+            strokeDasharray="3 9"/>
         ))}
-        {/* Core lines */}
+
+        {/* EN → Secondary thin spokes */}
+        {show('connections') === 1 && SEC.slice(0,5).map(l => (
+          <line key={`es-${l.id}`} x1={EN_X} y1={EN_Y} x2={l.cx} y2={l.cy}
+            stroke={enCol} strokeWidth={0.25 + l.sim * 0.6} opacity={0.06 + l.sim * 0.08}
+            strokeDasharray="2 8"/>
+        ))}
+
+        {/* Core → EN and Core → Target lines */}
         {show('connections') === 1 && <>
-          <line x1="350" y1="248" x2="130" y2="148" stroke="#4cc9ff" strokeWidth="0.5" opacity="0.18" strokeDasharray="3 6"/>
-          <line x1="350" y1="248" x2="570" y2="148" stroke="#4cc9ff" strokeWidth="0.5" opacity="0.18" strokeDasharray="3 6"/>
+          <line x1={CX} y1={CY} x2={EN_X} y2={EN_Y} stroke="#4cc9ff" strokeWidth="0.6" opacity="0.2" strokeDasharray="3 7"/>
+          <line x1={CX} y1={CY} x2={TGT_X} y2={TGT_Y} stroke="#4cc9ff" strokeWidth="0.6" opacity="0.2" strokeDasharray="3 7"/>
         </>}
-        {/* EN↔ES main bridge */}
+
+        {/* EN↔Target primary beam — glow + sharp */}
         {show('connections') === 1 && <>
-          <line x1="130" y1="148" x2="570" y2="148" stroke="url(#csEdge)" strokeWidth={edgeW * 3} opacity={0.07} style={{ filter: 'blur(4px)' }}/>
-          <line x1="130" y1="148" x2="570" y2="148" stroke="url(#csEdge)" strokeWidth={edgeW} filter="url(#csGS)"/>
-          <rect x="315" y="134" width="70" height="28" rx="5" fill="rgba(0,0,0,0.82)" stroke="rgba(255,255,255,0.2)" strokeWidth="0.8"/>
-          <text x="350" y="152" textAnchor="middle" fill="white" fontSize="11" fontWeight="900"
-            fontFamily="'JetBrains Mono',monospace">{Math.round(sim * 100)}%</text>
+          <line x1={EN_X} y1={EN_Y} x2={TGT_X} y2={TGT_Y}
+            stroke="url(#csEdge2)" strokeWidth={edgeW * 3.5} opacity={0.06}
+            style={{ filter: 'blur(5px)' }}/>
+          <line x1={EN_X} y1={EN_Y} x2={TGT_X} y2={TGT_Y}
+            stroke="url(#csEdge2)" strokeWidth={edgeW} filter="url(#csGS2)"/>
+          {/* Similarity badge */}
+          <rect x={CX - 38} y={EN_Y - 17} width="76" height="30" rx="6"
+            fill="rgba(2,4,18,0.9)" stroke="rgba(255,255,255,0.18)" strokeWidth="0.8"/>
+          <text x={CX} y={EN_Y - 5} textAnchor="middle" fill="rgba(255,255,255,0.45)"
+            fontSize="7" fontFamily="'JetBrains Mono',monospace" letterSpacing="0.1em">SIMILARITY</text>
+          <text x={CX} y={EN_Y + 10} textAnchor="middle" fill="white"
+            fontSize="13" fontWeight="900" fontFamily="'JetBrains Mono',monospace"
+            style={{ filter: `drop-shadow(0 0 8px rgba(255,255,255,0.5))` }}>
+            {Math.round(sim * 100)}%
+          </text>
         </>}
-        {/* Traveling particles */}
-        {show('particles') === 1 && [0, 0.35, 0.67].map((off, i) => (
-          <circle key={i} r={2.4 - i * 0.35} fill="white" opacity={0.65 * edgeOp}>
-            {React.createElement('animateMotion' as any, { dur: `${1.9 + i * 0.3}s`, repeatCount: 'indefinite', begin: `${off * 2}s`, path: 'M 130 148 L 570 148' })}
-          </circle>
+
+        {/* Traveling particles on main beam */}
+        {show('particles') === 1 && [0, 0.33, 0.66].map((off, i) => {
+          const frac = ((t * 0.38 + off) % 1.0);
+          const px = EN_X + (TGT_X - EN_X) * frac;
+          return (
+            <g key={i}>
+              <circle cx={px} cy={EN_Y} r={2.8 - i * 0.5} fill="white" opacity={0.7 * edgeOp * (1 - Math.abs(frac - 0.5) * 0.6)}
+                style={{ filter: `drop-shadow(0 0 4px white)` }}/>
+            </g>
+          );
+        })}
+        {/* Reverse particles */}
+        {show('particles') === 1 && [0.17, 0.5, 0.83].map((off, i) => {
+          const frac = ((t * 0.28 + off) % 1.0);
+          const px = TGT_X + (EN_X - TGT_X) * frac;
+          return (
+            <circle key={`r${i}`} cx={px} cy={EN_Y} r={2.2 - i * 0.4} fill={tgtCol}
+              opacity={0.55 * edgeOp} style={{ filter: `drop-shadow(0 0 3px ${tgtCol})` }}/>
+          );
+        })}
+
+        {/* Animated outer pulsing ring around core */}
+        {[38, 55, 74].map((r, i) => (
+          <circle key={`cr${i}`} cx={CX} cy={CY} r={r}
+            fill="none" stroke="rgba(76,201,255,0.12)" strokeWidth="0.6"
+            style={{ animation: `glowPulse ${2.5 + i * 0.7}s ease-in-out ${i * 0.4}s infinite` }}/>
         ))}
-        {/* Central AI Core (350, 248) */}
-        <g opacity={show('nodes')} style={{ transition: 'opacity 0.8s 0.3s ease' }}>
-          <circle cx="350" cy="248" r="58" fill="rgba(100,200,255,0.03)" style={{ animation: 'glowPulse 2.5s ease-in-out infinite' }}/>
-          <ellipse cx="350" cy="248" rx="50" ry="12" fill="none" stroke="rgba(100,200,255,0.35)" strokeWidth="1"
-            style={{ animation: 'spin 6s linear infinite', transformOrigin: '350px 248px' }}/>
-          <ellipse cx="350" cy="248" rx="40" ry="9" fill="none" stroke="rgba(100,200,255,0.2)" strokeWidth="0.8"
-            style={{ animation: 'spinReverse 9s linear infinite', transformOrigin: '350px 248px' }}/>
-          <circle cx="350" cy="248" r="34" fill="rgba(100,200,255,0.04)" stroke="rgba(100,200,255,0.15)" strokeWidth="0.5"/>
-          <circle cx="350" cy="248" r="26" fill="rgba(100,200,255,0.08)" stroke="rgba(100,200,255,0.3)" strokeWidth="0.8"
+        {/* Rotating orbit rings around core */}
+        <ellipse cx={CX} cy={CY} rx="46" ry="11" fill="none" stroke="rgba(76,201,255,0.35)"
+          strokeWidth="0.8" style={{ animation: 'spin 5s linear infinite', transformOrigin: `${CX}px ${CY}px` }}/>
+        <ellipse cx={CX} cy={CY} rx="36" ry="8" fill="none" stroke="rgba(76,201,255,0.22)"
+          strokeWidth="0.6" style={{ animation: 'spinReverse 8s linear infinite', transformOrigin: `${CX}px ${CY}px` }}/>
+
+        {/* Central AI Core node */}
+        <g opacity={show('nodes')} style={{ transition: 'opacity 0.8s 0.4s ease' }}>
+          <circle cx={CX} cy={CY} r="70" fill="rgba(76,201,255,0.02)"
+            style={{ animation: 'glowPulse 3s ease-in-out infinite' }}/>
+          <circle cx={CX} cy={CY} r={CORE_R + 8} fill="rgba(76,201,255,0.08)"
             style={{ animation: 'glowPulse 2s ease-in-out infinite' }}/>
-          <circle cx="350" cy="248" r="17" fill="rgba(100,200,255,0.65)" filter="url(#csGS)"
-            style={{ animation: 'glowPulse 1.5s ease-in-out infinite' }}/>
-          <text x="350" y="292" textAnchor="middle" fill="#64c8ff" fontSize="7" fontWeight="900"
-            fontFamily="'JetBrains Mono',monospace" style={{ letterSpacing: '.14em' }}>NURO AI</text>
-          <text x="350" y="301" textAnchor="middle" fill="rgba(255,255,255,0.35)" fontSize="5.5"
+          <circle cx={CX} cy={CY} r={CORE_R} fill="url(#csCoreGrad)" filter="url(#csGB2)"
+            style={{ animation: 'PlanetBreath 2.2s ease-in-out infinite' }}/>
+          <circle cx={CX - 7} cy={CY - 7} r={CORE_R * 0.32} fill="white" opacity="0.22"/>
+          <text x={CX} y={CY + 4} textAnchor="middle" fill="white" fontSize="7" fontWeight="900"
+            fontFamily="'JetBrains Mono',monospace" letterSpacing=".12em">CORE</text>
+          <text x={CX} y={CY + CORE_R + 14} textAnchor="middle" fill="#64c8ff" fontSize="6.5" fontWeight="800"
+            fontFamily="'JetBrains Mono',monospace" letterSpacing=".1em">NURO AI</text>
+          <text x={CX} y={CY + CORE_R + 24} textAnchor="middle" fill="rgba(255,255,255,0.3)" fontSize="5.5"
             fontFamily="'JetBrains Mono',monospace">Translation Core</text>
         </g>
+
         {/* Secondary nodes */}
         {SEC.map((l, i) => (
-          <g key={l.id} opacity={show('nodes') * 0.72}
-            style={{ transition: `opacity 0.6s ${0.08 + i * 0.07}s ease`, cursor: 'pointer' }}
+          <g key={l.id}
+            opacity={show('nodes') === 1 ? (0.60 + i * 0.01) : 0}
+            style={{ transition: `opacity 0.7s ${0.05 + i * 0.06}s ease`, cursor: 'pointer' }}
             onMouseEnter={() => setHoveredNode(l.id)} onMouseLeave={() => setHoveredNode(null)}>
-            <circle cx={l.cx} cy={l.cy} r={l.r + 10} fill={l.color} opacity="0.05"
-              style={{ animation: `glowPulse ${2.5 + i * 0.3}s ease-in-out infinite` }}/>
-            <circle cx={l.cx} cy={l.cy} r={l.r} filter="url(#csGS)" fill={l.color}
-              style={{ animation: `PlanetBreath ${2.8 + i * 0.22}s ease-in-out infinite` }}/>
-            <circle cx={l.cx - l.r * 0.25} cy={l.cy - l.r * 0.25} r={l.r * 0.28} fill="white" opacity="0.18"/>
+            <circle cx={l.cx} cy={l.cy} r={l.r + 14} fill={l.color} opacity={0.04}
+              style={{ animation: `glowPulse ${2.4 + i * 0.28}s ease-in-out ${i * 0.1}s infinite` }}/>
+            <circle cx={l.cx} cy={l.cy} r={l.r} filter="url(#csGS2)" fill={l.color}
+              style={{ animation: `PlanetBreath ${2.6 + i * 0.2}s ease-in-out ${i * 0.15}s infinite` }}/>
+            <circle cx={l.cx - l.r * 0.27} cy={l.cy - l.r * 0.27} r={l.r * 0.3} fill="white" opacity="0.16"/>
             <text x={l.cx} y={l.cy + 3} textAnchor="middle" fill="white" fontSize="6.5" fontWeight="800"
               fontFamily="'JetBrains Mono',monospace">{l.label}</text>
             <text x={l.cx} y={l.cy + l.r + 11} textAnchor="middle" fill={l.color} fontSize="5.5"
               fontFamily="'JetBrains Mono',monospace">{Math.round(l.sim * 100)}%</text>
+            {hoveredNode === l.id && (
+              <g>
+                <rect x={Math.min(648, Math.max(8, l.cx - 62))} y={l.cy - l.r - 44} width="124" height="38" rx="5"
+                  fill="rgba(2,4,18,0.92)" stroke={`${l.color}60`} strokeWidth="0.8"/>
+                <text x={Math.min(648, Math.max(8, l.cx - 62)) + 62} y={l.cy - l.r - 30} textAnchor="middle"
+                  fill={l.color} fontSize="7.5" fontWeight="900" fontFamily="'JetBrains Mono',monospace">{l.name}</text>
+                <text x={Math.min(648, Math.max(8, l.cx - 62)) + 62} y={l.cy - l.r - 20} textAnchor="middle"
+                  fill="rgba(255,255,255,0.5)" fontSize="6" fontFamily="'JetBrains Mono',monospace">{l.fam} · ref {Math.round(l.sim * 100)}%</text>
+                <text x={Math.min(648, Math.max(8, l.cx - 62)) + 62} y={l.cy - l.r - 11} textAnchor="middle"
+                  fill="rgba(255,255,255,0.3)" fontSize="5.5" fontFamily="'JetBrains Mono',monospace">◦ Reference node</text>
+              </g>
+            )}
           </g>
         ))}
-        {/* EN node (130, 148) */}
+
+        {/* EN primary node */}
         <g opacity={show('nodes')} style={{ transition: 'opacity 0.5s ease', cursor: 'pointer' }}
           onMouseEnter={() => setHoveredNode('en')} onMouseLeave={() => setHoveredNode(null)}>
-          <circle cx="130" cy="148" r="44" fill={enCol} opacity="0.05" style={{ animation: 'glowPulse 2s ease-in-out infinite' }}/>
-          <ellipse cx="130" cy="148" rx="36" ry="9" fill="none" stroke={enCol} strokeWidth="0.8" opacity="0.28"
-            style={{ animation: 'spin 5s linear infinite', transformOrigin: '130px 148px' }}/>
-          <circle cx="130" cy="148" r="28" fill={enCol} filter="url(#csGB)"
-            style={{ animation: 'PlanetBreath 2.2s ease-in-out infinite' }}/>
-          <circle cx="122" cy="140" r="8" fill="white" opacity="0.18"/>
-          <text x="130" y="152" textAnchor="middle" fill="white" fontSize="12" fontWeight="900"
+          <circle cx={EN_X} cy={EN_Y} r="50" fill={enCol} opacity="0.04"
+            style={{ animation: 'glowPulse 2s ease-in-out infinite' }}/>
+          <circle cx={EN_X} cy={EN_Y} r="32" fill={enCol} opacity="0.08"
+            style={{ animation: 'glowPulse 2.8s ease-in-out 0.3s infinite' }}/>
+          <ellipse cx={EN_X} cy={EN_Y} rx="38" ry="9.5" fill="none" stroke={enCol}
+            strokeWidth="0.9" opacity="0.30" style={{ animation: 'spin 5s linear infinite', transformOrigin: `${EN_X}px ${EN_Y}px` }}/>
+          <circle cx={EN_X} cy={EN_Y} r="28" fill={enCol} filter="url(#csGB2)"
+            style={{ animation: 'PlanetBreath 2.3s ease-in-out infinite' }}/>
+          <circle cx={EN_X - 8} cy={EN_Y - 8} r="8.5" fill="white" opacity="0.2"/>
+          <text x={EN_X} y={EN_Y + 4} textAnchor="middle" fill="white" fontSize="13" fontWeight="900"
             fontFamily="'JetBrains Mono',monospace">EN</text>
-          <text x="130" y="188" textAnchor="middle" fill={enCol} fontSize="7"
-            fontFamily="'JetBrains Mono',monospace">Source</text>
+          <text x={EN_X} y={EN_Y + 44} textAnchor="middle" fill={enCol} fontSize="6.5"
+            fontFamily="'JetBrains Mono',monospace" letterSpacing=".1em">Source Language</text>
+          {hoveredNode === 'en' && (
+            <g>
+              <rect x={EN_X - 58} y={EN_Y - 82} width="116" height="44" rx="5"
+                fill="rgba(2,4,18,0.92)" stroke="rgba(255,68,68,0.55)" strokeWidth="0.8"/>
+              <text x={EN_X} y={EN_Y - 65} textAnchor="middle" fill="#FF4444" fontSize="8" fontWeight="900"
+                fontFamily="'JetBrains Mono',monospace">ENGLISH (EN)</text>
+              <text x={EN_X} y={EN_Y - 54} textAnchor="middle" fill="rgba(255,255,255,0.5)" fontSize="6.5"
+                fontFamily="'JetBrains Mono',monospace">Primary Source · Live data</text>
+              <text x={EN_X} y={EN_Y - 44} textAnchor="middle" fill="rgba(255,255,255,0.3)" fontSize="5.5"
+                fontFamily="'JetBrains Mono',monospace">● Embedding similarity active</text>
+            </g>
+          )}
         </g>
-        {/* Target language node (570, 148) */}
-        <g opacity={show('nodes')} style={{ transition: 'opacity 0.5s 0.15s ease', cursor: 'pointer' }}
-          onMouseEnter={() => setHoveredNode('es')} onMouseLeave={() => setHoveredNode(null)}>
-          <circle cx="570" cy="148" r="44" fill={esCol} opacity="0.05" style={{ animation: 'glowPulse 2.3s ease-in-out infinite' }}/>
-          <ellipse cx="570" cy="148" rx="36" ry="9" fill="none" stroke={esCol} strokeWidth="0.8" opacity="0.28"
-            style={{ animation: 'spinReverse 7s linear infinite', transformOrigin: '570px 148px' }}/>
-          <circle cx="570" cy="148" r="28" fill={esCol} filter="url(#csGB)"
-            style={{ animation: 'PlanetBreath 2.6s ease-in-out infinite' }}/>
-          <circle cx="562" cy="140" r="8" fill="white" opacity="0.18"/>
-          <text x="570" y="152" textAnchor="middle" fill="white" fontSize="12" fontWeight="900"
+
+        {/* Target language primary node */}
+        <g opacity={show('nodes')} style={{ transition: 'opacity 0.5s 0.2s ease', cursor: 'pointer' }}
+          onMouseEnter={() => setHoveredNode('tgt')} onMouseLeave={() => setHoveredNode(null)}>
+          <circle cx={TGT_X} cy={TGT_Y} r="50" fill={tgtCol} opacity="0.04"
+            style={{ animation: 'glowPulse 2.4s ease-in-out infinite' }}/>
+          <circle cx={TGT_X} cy={TGT_Y} r="32" fill={tgtCol} opacity="0.08"
+            style={{ animation: 'glowPulse 3s ease-in-out 0.5s infinite' }}/>
+          <ellipse cx={TGT_X} cy={TGT_Y} rx="38" ry="9.5" fill="none" stroke={tgtCol}
+            strokeWidth="0.9" opacity="0.30" style={{ animation: 'spinReverse 7s linear infinite', transformOrigin: `${TGT_X}px ${TGT_Y}px` }}/>
+          <circle cx={TGT_X} cy={TGT_Y} r="28" fill={tgtCol} filter="url(#csGB2)"
+            style={{ animation: 'PlanetBreath 2.7s ease-in-out infinite' }}/>
+          <circle cx={TGT_X - 8} cy={TGT_Y - 8} r="8.5" fill="white" opacity="0.2"/>
+          <text x={TGT_X} y={TGT_Y + 4} textAnchor="middle" fill="white" fontSize="13" fontWeight="900"
             fontFamily="'JetBrains Mono',monospace">{tgtCode}</text>
-          <text x="570" y="188" textAnchor="middle" fill={esCol} fontSize="7"
-            fontFamily="'JetBrains Mono',monospace">{Math.round(sim * 100)}% match</text>
+          <text x={TGT_X} y={TGT_Y + 44} textAnchor="middle" fill={tgtCol} fontSize="6.5"
+            fontFamily="'JetBrains Mono',monospace" letterSpacing=".1em">{Math.round(sim * 100)}% match</text>
+          {hoveredNode === 'tgt' && (
+            <g>
+              <rect x={TGT_X - 68} y={TGT_Y - 90} width="136" height="52" rx="5"
+                fill="rgba(2,4,18,0.92)" stroke="rgba(255,140,0,0.55)" strokeWidth="0.8"/>
+              <text x={TGT_X} y={TGT_Y - 72} textAnchor="middle" fill={tgtCol} fontSize="8" fontWeight="900"
+                fontFamily="'JetBrains Mono',monospace">{data?.targetLanguage ?? 'TARGET LANGUAGE'}</text>
+              <text x={TGT_X} y={TGT_Y - 61} textAnchor="middle" fill="rgba(255,255,255,0.5)" fontSize="6.5"
+                fontFamily="'JetBrains Mono',monospace">Similarity: {Math.round(sim * 100)}%</text>
+              <text x={TGT_X} y={TGT_Y - 51} textAnchor="middle" fill="rgba(255,255,255,0.35)" fontSize="6"
+                fontFamily="'JetBrains Mono',monospace">Embedding · {data?.embeddingSimilarity ?? 0}%</text>
+              <text x={TGT_X} y={TGT_Y - 42} textAnchor="middle" fill="rgba(255,255,255,0.25)" fontSize="5.5"
+                fontFamily="'JetBrains Mono',monospace">● Primary detected target · Live data</text>
+            </g>
+          )}
         </g>
-        {/* Hover tooltips */}
-        {hoveredNode === 'en' && (
-          <g>
-            <rect x="48" y="88" width="118" height="38" rx="5" fill="rgba(0,0,0,0.88)" stroke="rgba(255,68,68,0.5)" strokeWidth="0.8"/>
-            <text x="107" y="104" textAnchor="middle" fill="#FF4444" fontSize="7" fontWeight="800" fontFamily="'JetBrains Mono',monospace">ENGLISH (EN)</text>
-            <text x="107" y="115" textAnchor="middle" fill="rgba(255,255,255,0.5)" fontSize="6" fontFamily="'JetBrains Mono',monospace">Source Language</text>
-          </g>
-        )}
-        {hoveredNode === 'es' && (
-          <g>
-            <rect x="490" y="88" width="145" height="48" rx="5" fill="rgba(0,0,0,0.88)" stroke="rgba(255,140,0,0.5)" strokeWidth="0.8"/>
-            <text x="562" y="104" textAnchor="middle" fill={esCol} fontSize="7" fontWeight="800" fontFamily="'JetBrains Mono',monospace">{data?.targetLanguage ?? 'TARGET LANG'}</text>
-            <text x="562" y="114" textAnchor="middle" fill="rgba(255,255,255,0.5)" fontSize="6" fontFamily="'JetBrains Mono',monospace">Similarity: {Math.round(sim * 100)}%</text>
-            <text x="562" y="124" textAnchor="middle" fill="rgba(255,255,255,0.35)" fontSize="5.5" fontFamily="'JetBrains Mono',monospace">Embedding · {data?.embeddingSimilarity ?? 0}%</text>
-          </g>
-        )}
-        {SEC.map(l => hoveredNode === l.id ? (
-          <g key={`tt-${l.id}`}>
-            <rect x={Math.min(640, Math.max(10, l.cx - 58))} y={l.cy - l.r - 34} width="116" height="28" rx="4"
-              fill="rgba(0,0,0,0.88)" stroke={`${l.color}55`} strokeWidth="0.8"/>
-            <text x={Math.min(640, Math.max(10, l.cx - 58)) + 58} y={l.cy - l.r - 20} textAnchor="middle"
-              fill={l.color} fontSize="7" fontWeight="800" fontFamily="'JetBrains Mono',monospace">{l.label} · {Math.round(l.sim * 100)}% related</text>
-            <text x={Math.min(640, Math.max(10, l.cx - 58)) + 58} y={l.cy - l.r - 11} textAnchor="middle"
-              fill="rgba(255,255,255,0.38)" fontSize="5.5" fontFamily="'JetBrains Mono',monospace">Secondary constellation node</text>
-          </g>
-        ) : null)}
       </svg>
+
       {/* Radar chart */}
-      <div style={{ display: 'flex', justifyContent: 'center', marginTop: 4, borderTop: '1px solid rgba(255,255,255,0.04)', paddingTop: 8 }}>
-        <RadarChart metrics={radarMetrics} />
+      <div style={{ display: 'flex', justifyContent: 'center', marginTop: 6,
+        borderTop: '1px solid rgba(255,255,255,0.04)', paddingTop: 10 }}>
+        <IntelRadarChart metrics={radarMetrics} />
       </div>
     </div>
   );
