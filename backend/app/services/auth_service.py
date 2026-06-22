@@ -55,8 +55,14 @@ except ImportError:
     _USE_JWT = False
 
 
-def create_access_token(data: dict, expires_delta: Optional[int] = None) -> str:
-    exp = int(time.time()) + (expires_delta or ACCESS_TOKEN_EXPIRE_SECONDS)
+def create_access_token(data: dict, expires_delta=None) -> str:
+    if expires_delta is None:
+        extra = ACCESS_TOKEN_EXPIRE_SECONDS
+    elif hasattr(expires_delta, "total_seconds"):
+        extra = int(expires_delta.total_seconds())
+    else:
+        extra = int(expires_delta)
+    exp = int(time.time()) + extra
     payload = {**data, "exp": exp, "iat": int(time.time())}
     if _USE_JWT and _pyjwt is not None:
         return _pyjwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
