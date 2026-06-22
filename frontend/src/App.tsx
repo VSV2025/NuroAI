@@ -179,7 +179,11 @@ function GlobalStyle() {
       @keyframes circuitPulse { 0%,100%{opacity:.04;} 50%{opacity:.11;} }
       @keyframes dashFlow { to{stroke-dashoffset:-36;} }
       @keyframes spinReverse { to{transform:rotate(-360deg);} }
-      @keyframes coreBreath { 0%,100%{box-shadow:0 0 44px var(--cc,#ef4444)28,0 0 90px var(--cc,#ef4444)10;} 50%{box-shadow:0 0 72px var(--cc,#ef4444)48,0 0 140px var(--cc,#ef4444)20;} }
+      @keyframes coreBreath { 0%,100%{box-shadow:0 0 44px var(--cc,#ef4444)28,0 0 90px var(--cc,#ef4444)10; transform:scale(1);} 50%{box-shadow:0 0 72px var(--cc,#ef4444)48,0 0 140px var(--cc,#ef4444)20; transform:scale(1.018);} }
+      @keyframes particleEmit { 0%{opacity:0;transform:translateX(0) scale(0);} 35%{opacity:.92;} 100%{opacity:0;transform:translateX(58px) scale(.4);} }
+      @keyframes particleOrbit { 0%{opacity:0;transform:rotate(var(--pa,0deg)) translateX(var(--pr,170px)) scale(0);} 25%{opacity:.85;} 75%{opacity:.5;} 100%{opacity:0;transform:rotate(calc(var(--pa,0deg) + 30deg)) translateX(var(--pr,170px)) scale(.5);} }
+      @keyframes rimGlow { 0%,100%{opacity:.45;} 50%{opacity:.82;} }
+      @keyframes docRingPulse { 0%,100%{opacity:.38; transform:translate(-50%,-50%) scale(1);} 50%{opacity:.72; transform:translate(-50%,-50%) scale(1.04);} }
 
       .reveal { animation:floatUp .7s cubic-bezier(.2,.7,.2,1) both; }
       .pulse { animation:glowPulse 2.6s ease-in-out infinite; }
@@ -195,12 +199,12 @@ function GlobalStyle() {
 
       /* sidebar nav */
       .navitem { display:flex; align-items:center; gap:12px; padding:10px 13px; border-radius:11px;
-        color:#8a8a94; font-weight:500; font-size:14px; transition:all .22s cubic-bezier(.4,0,.2,1); position:relative; cursor:pointer; }
-      .navitem:hover { color:#e8e8ea; background:rgba(220,38,38,0.07); box-shadow:inset 0 0 0 1px rgba(220,38,38,.10); }
-      .navitem.active { color:#fff; background:linear-gradient(90deg,rgba(220,38,38,.13),rgba(220,38,38,.03));
-        border:1px solid rgba(220,38,38,.28); box-shadow:0 0 18px rgba(220,38,38,.12); }
-      .navitem.active::before { content:''; position:absolute; left:-1px; top:16%; bottom:16%; width:3px;
-        border-radius:3px; background:#DC2626; box-shadow:0 0 14px rgba(220,38,38,.9), 0 0 28px rgba(220,38,38,.4); }
+        color:#8a8a94; font-weight:500; font-size:14px; transition:all .28s cubic-bezier(.34,1.56,.64,1); position:relative; cursor:pointer; }
+      .navitem:hover { color:#ff8080; background:rgba(220,38,38,0.10); box-shadow:inset 0 0 0 1px rgba(220,38,38,.18), 0 0 12px rgba(220,38,38,.08); transform:translateX(2px); }
+      .navitem.active { color:#fff; background:linear-gradient(90deg,rgba(220,38,38,.18),rgba(220,38,38,.04));
+        border:1px solid rgba(220,38,38,.35); box-shadow:-3px 0 20px rgba(220,38,38,.35), 0 0 22px rgba(220,38,38,.18), 0 0 0 1px rgba(220,38,38,.28), inset 0 0 20px rgba(220,38,38,.06); }
+      .navitem.active::before { content:''; position:absolute; left:-1px; top:12%; bottom:12%; width:3px;
+        border-radius:3px; background:linear-gradient(180deg,#ff4444,#DC2626,#991b1b); box-shadow:0 0 18px rgba(220,38,38,1), 0 0 36px rgba(220,38,38,.6), 0 0 54px rgba(220,38,38,.25); }
 
       .grid-bg {
         background-image:linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px),
@@ -1351,10 +1355,27 @@ function CentralProcessor({ coreColor, confidence, isHuman, aiProb, humanProb }:
         style={{ position:"absolute", width:390, height:390, top:-88, left:-88,
           borderRadius:"50%", border:`1px solid ${coreColor}07`,
           borderBottomColor:`${coreColor}22`, pointerEvents:"none" }}/>
-      {/* Outer pulsing halo */}
-      <div style={{ position:"absolute", width:440, height:440, top:-113, left:-113,
-        borderRadius:"50%", background:`radial-gradient(circle, ${coreColor}06 0%, transparent 68%)`,
+      {/* 4th ring — very slow, ultra-subtle */}
+      <motion.div
+        animate={{ rotate: -360 }}
+        transition={{ duration: 38, ease: "linear", repeat: Infinity }}
+        style={{ position:"absolute", width:430, height:430, top:-108, left:-108,
+          borderRadius:"50%", border:`1px solid ${coreColor}04`,
+          borderLeftColor:`${coreColor}18`, borderRightColor:`${coreColor}10`,
+          pointerEvents:"none" }}/>
+      {/* Outer pulsing halo — stronger */}
+      <div style={{ position:"absolute", width:460, height:460, top:-123, left:-123,
+        borderRadius:"50%", background:`radial-gradient(circle, ${coreColor}08 0%, ${coreColor}03 40%, transparent 70%)`,
         animation:"glowPulse 3.8s ease-in-out infinite", pointerEvents:"none" }}/>
+      {/* 12 particle emitters at 30° intervals */}
+      {[...Array(12)].map((_,i)=>(
+        <div key={`pe${i}`} style={{ position:"absolute", width:4, height:4, borderRadius:"50%",
+          background:coreColor, top:"50%", left:"50%", pointerEvents:"none",
+          boxShadow:`0 0 6px ${coreColor}`,
+          "--pa":`${i*30}deg`, "--pr":"178px",
+          animation:`particleOrbit ${2.4+i*0.18}s ease-in-out ${i*(2.4/12)}s infinite`,
+        } as React.CSSProperties}/>
+      ))}
       <div style={{
         width:214, height:214, position:"relative",
         background:"linear-gradient(145deg,#081624 0%,#0c2040 48%,#060f1c 100%)",
@@ -1398,9 +1419,9 @@ function CentralProcessor({ coreColor, confidence, isHuman, aiProb, humanProb }:
             fontFamily:"'JetBrains Mono',monospace" }}>
             {isHuman?"AUTHENTICITY SCORE":"AI CONFIDENCE"}
           </div>
-          <div style={{ fontSize:52, fontWeight:900, color:"#fff", lineHeight:1,
+          <div style={{ fontSize:56, fontWeight:900, color:"#fff", lineHeight:1,
             fontFamily:"'JetBrains Mono',monospace",
-            textShadow:`0 0 28px ${coreColor},0 0 60px ${coreColor}66,0 0 100px ${coreColor}22` }}>{confidence}%</div>
+            textShadow:`0 0 20px ${coreColor},0 0 40px ${coreColor}cc,0 0 70px ${coreColor}66,0 0 120px ${coreColor}22,0 2px 0 rgba(0,0,0,.8)` }}>{confidence}%</div>
           <div style={{ fontSize:7.5, color:coreColor, letterSpacing:".18em", fontWeight:800,
             fontFamily:"'JetBrains Mono',monospace",
             textShadow:`0 0 10px ${coreColor}` }}>
@@ -1513,33 +1534,40 @@ function ProcessorChipPanel({ nodes, coreColor, confidence, isHuman, aiProb, hum
       ))}
       {/* Module microchips */}
       {nodes.slice(0,6).map((n,i)=>(
-        <div key={n.id} style={{ position:"absolute", width:138, zIndex:4, ...MOD_STYLE[i] }}>
-          <div style={{ padding:"9px 13px", borderRadius:8,
-            background:"rgba(5,14,26,.97)",
-            border:`1px solid ${nc[i]}55`,
-            boxShadow:`0 0 ${16 + Math.round(n.conf * 0.32)}px ${nc[i]}50, 0 0 2px ${nc[i]}30, inset 0 1px 0 rgba(255,255,255,.04), 0 6px 28px rgba(0,0,0,.75)`,
-            backdropFilter:"blur(16px)" }}>
+        <div key={n.id} style={{ position:"absolute", width:142, zIndex:4, ...MOD_STYLE[i] }}>
+          <div style={{ padding:"10px 14px", borderRadius:10,
+            background:"rgba(4,12,24,.98)",
+            border:`1px solid ${nc[i]}60`,
+            boxShadow:`0 0 ${20 + Math.round(n.conf * 0.36)}px ${nc[i]}55, 0 0 3px ${nc[i]}35, inset 0 1px 0 rgba(255,255,255,.07), inset 0 -1px 0 rgba(0,0,0,.4), 0 8px 32px rgba(0,0,0,.85)`,
+            backdropFilter:"blur(20px) saturate(180%)",
+            transition:"all 0.35s cubic-bezier(.34,1.56,.64,1)" }}>
+            {/* Top shimmer line */}
+            <div style={{ position:"absolute", top:0, left:12, right:12, height:1,
+              background:`linear-gradient(90deg,transparent,${nc[i]}cc,transparent)`,
+              borderRadius:"0 0 1px 1px" }}/>
             <div style={{ display:"flex", alignItems:"center", gap:5, marginBottom:6 }}>
               <div style={{ width:7, height:7, borderRadius:2,
-                background:nc[i], boxShadow:`0 0 ${5 + Math.round(n.conf * 0.10)}px ${nc[i]}`,
+                background:nc[i], boxShadow:`0 0 ${6 + Math.round(n.conf * 0.12)}px ${nc[i]}, 0 0 ${10 + Math.round(n.conf * 0.18)}px ${nc[i]}55`,
                 animation:`glowPulse ${Math.max(0.9, 2.2 - n.conf * 0.014)}s ease-in-out infinite` }}/>
               <div style={{ fontSize:7, fontWeight:800, color:nc[i],
-                letterSpacing:".11em", textTransform:"uppercase" }}>{n.name}</div>
+                letterSpacing:".12em", textTransform:"uppercase",
+                textShadow:`0 0 8px ${nc[i]}88` }}>{n.name}</div>
             </div>
-            <div style={{ fontSize:28, fontWeight:900, color:"#fff", lineHeight:1,
+            <div style={{ fontSize:30, fontWeight:900, color:"#fff", lineHeight:1,
               fontFamily:"'JetBrains Mono',monospace",
-              textShadow:`0 0 18px ${nc[i]}, 0 0 36px ${nc[i]}44` }}>
-              {n.conf}<span style={{ fontSize:12, color:`${nc[i]}bb`, fontWeight:700, fontFamily:"'JetBrains Mono',monospace" }}>%</span>
+              textShadow:`0 0 18px ${nc[i]}, 0 0 36px ${nc[i]}55, 0 0 60px ${nc[i]}22` }}>
+              {n.conf}<span style={{ fontSize:12, color:`${nc[i]}cc`, fontWeight:700, fontFamily:"'JetBrains Mono',monospace" }}>%</span>
             </div>
             <div style={{ height:2, borderRadius:1, background:"rgba(255,255,255,.06)",
               marginTop:7, overflow:"hidden" }}>
               <motion.div initial={{ width:0 }} animate={{ width:`${n.conf}%` }}
-                transition={{ duration:1.2, delay:i*0.1, ease:[.4,0,.2,1] }}
+                transition={{ duration:1.4, delay:i*0.12, ease:[.4,0,.2,1] }}
                 style={{ height:"100%", borderRadius:1,
-                  background:`linear-gradient(90deg,${nc[i]}55,${nc[i]})`,
-                  boxShadow:`0 0 6px ${nc[i]}` }}/>
+                  background:`linear-gradient(90deg,${nc[i]}44,${nc[i]})`,
+                  boxShadow:`0 0 8px ${nc[i]}, 0 0 16px ${nc[i]}55` }}/>
             </div>
-            <div style={{ fontSize:8, color:"rgba(255,255,255,.28)", marginTop:5 }}>{n.status}</div>
+            <div style={{ fontSize:8, color:"rgba(255,255,255,.35)", marginTop:5,
+              fontFamily:"'JetBrains Mono',monospace", letterSpacing:".08em" }}>{n.status}</div>
           </div>
         </div>
       ))}
@@ -1892,20 +1920,36 @@ function GalaxyCanvas2D({ clusters, docColor, hovered, setHovered }: any) {
         ctx.beginPath(); ctx.arc(nb.x * W, nb.y * H, rad, 0, Math.PI * 2); ctx.fill();
       }
 
+      // Cosmic dust overlay (very fine, barely visible)
+      ctx.globalAlpha = 0.018;
+      ctx.fillStyle = "#8090c8";
+      for (let d = 0; d < 120; d++) {
+        // Use deterministic positions (seeded by index) — no re-random per frame
+        const dx = ((d * 137.508 + 33) % W);
+        const dy = ((d * 97.372 + 17) % H);
+        ctx.beginPath(); ctx.arc(dx, dy, 0.5, 0, Math.PI * 2); ctx.fill();
+      }
+      ctx.globalAlpha = 1;
       // BG stars (slow parallax)
       for (const s of bgStars) {
-        ctx.globalAlpha = Math.max(0.05, Math.min(0.75, s.a + Math.sin(t * s.sp * 8) * 0.22));
-        const hue = Math.random() > 0.85 ? "#c8d8ff" : "#ffffff";
+        ctx.globalAlpha = Math.max(0.05, Math.min(0.78, s.a + Math.sin(t * s.sp * 8) * 0.24));
+        const hue = Math.random() > 0.82 ? "#c8d8ff" : "#ffffff";
         ctx.fillStyle = hue;
         ctx.beginPath(); ctx.arc(s.x * W, s.y * H, s.r, 0, Math.PI * 2); ctx.fill();
       }
-      // Bright twinkling stars layer
+      // Bright twinkling stars layer — premium shimmer
       for (const s of twinkleStars) {
         const twinkle = 0.5 + 0.5 * Math.sin(t * 2.8 + s.phase);
-        ctx.globalAlpha = 0.35 + twinkle * 0.65;
-        ctx.shadowColor = "#e0eaff"; ctx.shadowBlur = 4 + twinkle * 6;
-        ctx.fillStyle = "#ffffff";
-        ctx.beginPath(); ctx.arc(s.x * W, s.y * H, s.r * (0.85 + twinkle * 0.3), 0, Math.PI * 2); ctx.fill();
+        ctx.globalAlpha = 0.42 + twinkle * 0.58;
+        ctx.shadowColor = twinkle > 0.7 ? "#c8d8ff" : "#ffffff"; ctx.shadowBlur = 5 + twinkle * 10;
+        ctx.fillStyle = twinkle > 0.75 ? "#c8d8ff" : "#ffffff";
+        ctx.beginPath(); ctx.arc(s.x * W, s.y * H, s.r * (0.82 + twinkle * 0.42), 0, Math.PI * 2); ctx.fill();
+        // Diffraction spike on brightest twinkles
+        if (twinkle > 0.85) {
+          ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 0.6; ctx.globalAlpha = (twinkle - 0.85) * 3;
+          ctx.beginPath(); ctx.moveTo(s.x * W - 5, s.y * H); ctx.lineTo(s.x * W + 5, s.y * H); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(s.x * W, s.y * H - 5); ctx.lineTo(s.x * W, s.y * H + 5); ctx.stroke();
+        }
         ctx.shadowBlur = 0;
       }
       ctx.globalAlpha = 1;
@@ -1985,11 +2029,19 @@ function GalaxyCanvas2D({ clusters, docColor, hovered, setHovered }: any) {
         ctx.fillStyle = glow;
         ctx.beginPath(); ctx.arc(px, py, radius * 3.4 * pulse, 0, Math.PI * 2); ctx.fill();
 
-        // Core
-        const core = ctx.createRadialGradient(px - radius * 0.28, py - radius * 0.28, 0, px, py, radius * pulse);
-        core.addColorStop(0, "#ffffff58"); core.addColorStop(0.38, col); core.addColorStop(1, `${col}70`);
+        // Core — hemisphere shading
+        const core = ctx.createRadialGradient(px - radius * 0.30, py - radius * 0.30, 0, px, py, radius * pulse);
+        core.addColorStop(0, "rgba(255,255,255,0.72)"); core.addColorStop(0.18, "rgba(255,255,255,0.22)"); core.addColorStop(0.42, col); core.addColorStop(1, `${col}60`);
         ctx.fillStyle = core;
         ctx.beginPath(); ctx.arc(px, py, radius * pulse, 0, Math.PI * 2); ctx.fill();
+        // Rim lighting (dark shadow side)
+        const rimD = ctx.createRadialGradient(px + radius * 0.45, py + radius * 0.45, 0, px, py, radius * pulse);
+        rimD.addColorStop(0, "rgba(0,0,0,0)"); rimD.addColorStop(0.55, "rgba(0,0,0,0)"); rimD.addColorStop(1, "rgba(0,0,0,0.52)");
+        ctx.fillStyle = rimD; ctx.beginPath(); ctx.arc(px, py, radius * pulse, 0, Math.PI * 2); ctx.fill();
+        // Bright rim highlight (opposite side)
+        const rimH = ctx.createRadialGradient(px - radius * 0.6, py - radius * 0.45, 0, px - radius * 0.6, py - radius * 0.45, radius * 0.55);
+        rimH.addColorStop(0, `${col}55`); rimH.addColorStop(1, `${col}00`);
+        ctx.fillStyle = rimH; ctx.beginPath(); ctx.arc(px, py, radius * pulse, 0, Math.PI * 2); ctx.fill();
 
         // Orbit particles
         for (const op of (orbitPtcls[i] ?? [])) {
@@ -2007,20 +2059,24 @@ function GalaxyCanvas2D({ clusters, docColor, hovered, setHovered }: any) {
           ? (sim >= 75 ? "Strong Human Signal" : sim >= 50 ? "Human Signal" : "Weak Human Signal")
           : (sim >= 75 ? "Strong AI Signal"    : sim >= 50 ? "AI Signal"    : "Weak AI Signal");
         const signalCol2 = c.type === "human" ? "#4ade80" : "#f87171";
-        const baseY = py + radius * pulse + 15;
+        const baseY = py + radius * pulse + 16;
         ctx.textAlign = "center";
-        ctx.globalAlpha = isHov ? 1 : 0.80;
-        ctx.fillStyle = isHov ? "#fff" : "#d4d4d8";
-        ctx.font = `${isHov ? "700" : "600"} 10px Inter,sans-serif`;
+        ctx.globalAlpha = isHov ? 1 : 0.88;
+        ctx.fillStyle = isHov ? "#fff" : "#e0e0e8";
+        ctx.shadowColor = isHov ? "#fff" : col; ctx.shadowBlur = isHov ? 10 : 4;
+        ctx.font = `${isHov ? "800" : "700"} 11px Inter,sans-serif`;
         ctx.fillText(c.name ?? "", px, baseY);
-        ctx.globalAlpha = isHov ? 1 : 0.72;
+        ctx.shadowBlur = 0;
+        ctx.globalAlpha = isHov ? 1 : 0.82;
         ctx.fillStyle = col;
-        ctx.font = "bold 10px 'JetBrains Mono',monospace";
-        ctx.fillText(`${sim}% Match`, px, baseY + 13);
-        ctx.globalAlpha = isHov ? 0.9 : 0.48;
+        ctx.shadowColor = col; ctx.shadowBlur = 8;
+        ctx.font = "bold 11px 'JetBrains Mono',monospace";
+        ctx.fillText(`${sim}% Match`, px, baseY + 14);
+        ctx.shadowBlur = 0;
+        ctx.globalAlpha = isHov ? 0.95 : 0.62;
         ctx.fillStyle = signalCol2;
-        ctx.font = "9px Inter,sans-serif";
-        ctx.fillText(signalStr, px, baseY + 24);
+        ctx.font = "10px Inter,sans-serif";
+        ctx.fillText(signalStr, px, baseY + 26);
         ctx.globalAlpha = 1;
       }
 
@@ -2035,51 +2091,87 @@ function GalaxyCanvas2D({ clusters, docColor, hovered, setHovered }: any) {
       }
 
       // Document planet (larger)
-      const docR = 36, docP = Math.sin(t * 1.1) * 0.055 + 1;
+      const docR = 38, docP = Math.sin(t * 1.1) * 0.055 + 1;
+
+      // Wide outer energy field
+      const dField = ctx.createRadialGradient(cx, cy, docR * 1.2, cx, cy, docR * 8);
+      dField.addColorStop(0, `${dc}14`); dField.addColorStop(0.35, `${dc}08`); dField.addColorStop(1, `${dc}00`);
+      ctx.fillStyle = dField; ctx.beginPath(); ctx.arc(cx, cy, docR * 8, 0, Math.PI * 2); ctx.fill();
 
       // Atmosphere halo around document
       const dAtmo = ctx.createRadialGradient(cx, cy, docR * 0.8, cx, cy, docR * 5.5);
-      dAtmo.addColorStop(0, `${dc}28`); dAtmo.addColorStop(0.5, `${dc}10`); dAtmo.addColorStop(1, `${dc}00`);
+      dAtmo.addColorStop(0, `${dc}38`); dAtmo.addColorStop(0.4, `${dc}18`); dAtmo.addColorStop(1, `${dc}00`);
       ctx.fillStyle = dAtmo; ctx.beginPath(); ctx.arc(cx, cy, docR * 5.5, 0, Math.PI * 2); ctx.fill();
 
-      // Three orbit rings
-      for (const [orR, a, spd] of [[54, 0.48, 0.22], [74, 0.28, -0.14], [96, 0.16, 0.10]] as [number, number, number][]) {
+      // Five orbit rings (3 original + 2 new outer)
+      for (const [orR, a, spd] of [
+        [54, 0.52, 0.22], [74, 0.32, -0.14], [96, 0.20, 0.10],
+        [118, 0.10, -0.06], [140, 0.06, 0.04],
+      ] as [number, number, number][]) {
         ctx.save(); ctx.translate(cx, cy); ctx.rotate(t * spd); ctx.scale(1, 0.28);
         ctx.strokeStyle = dc; ctx.lineWidth = 1.4; ctx.globalAlpha = a;
-        ctx.beginPath(); ctx.arc(0, 0, orR, 0, Math.PI * 2); ctx.stroke(); ctx.restore();
+        ctx.shadowColor = dc; ctx.shadowBlur = 4;
+        ctx.beginPath(); ctx.arc(0, 0, orR, 0, Math.PI * 2); ctx.stroke();
+        ctx.shadowBlur = 0; ctx.restore();
+        // Traveling energy dot on each ring
+        const dotAngle = t * spd * 3.5 + orR * 0.1;
+        const eX = cx + Math.cos(dotAngle) * orR;
+        const eY = cy + Math.sin(dotAngle) * orR * 0.28;
+        ctx.globalAlpha = 0.82; ctx.fillStyle = "#fff"; ctx.shadowColor = dc; ctx.shadowBlur = 8;
+        ctx.beginPath(); ctx.arc(eX, eY, 2.5, 0, Math.PI * 2); ctx.fill(); ctx.shadowBlur = 0;
       }
       ctx.globalAlpha = 1;
 
       // Main glow
-      const dGlow = ctx.createRadialGradient(cx, cy, 0, cx, cy, docR * 3.8);
-      dGlow.addColorStop(0, `${dc}70`); dGlow.addColorStop(0.4, `${dc}30`); dGlow.addColorStop(1, `${dc}00`);
-      ctx.fillStyle = dGlow; ctx.beginPath(); ctx.arc(cx, cy, docR * 3.8, 0, Math.PI * 2); ctx.fill();
+      const dGlow = ctx.createRadialGradient(cx, cy, 0, cx, cy, docR * 4.2);
+      dGlow.addColorStop(0, `${dc}80`); dGlow.addColorStop(0.35, `${dc}38`); dGlow.addColorStop(1, `${dc}00`);
+      ctx.fillStyle = dGlow; ctx.beginPath(); ctx.arc(cx, cy, docR * 4.2, 0, Math.PI * 2); ctx.fill();
 
-      // Core sphere
-      const dCore = ctx.createRadialGradient(cx - docR * 0.28, cy - docR * 0.28, 0, cx, cy, docR * docP);
-      dCore.addColorStop(0, "#fff"); dCore.addColorStop(0.42, dc); dCore.addColorStop(1, `${dc}80`);
+      // 6 floating particles orbiting document at 60° intervals
+      for (let fp = 0; fp < 6; fp++) {
+        const fpAngle = t * 0.55 + (fp / 6) * Math.PI * 2;
+        const fpDist = docR * 2.4 + Math.sin(t * 1.8 + fp) * docR * 0.3;
+        const fpX = cx + Math.cos(fpAngle) * fpDist;
+        const fpY = cy + Math.sin(fpAngle) * fpDist * 0.42;
+        const fpA = 0.4 + 0.5 * Math.abs(Math.sin(t * 1.2 + fp * 1.1));
+        ctx.globalAlpha = fpA; ctx.fillStyle = dc; ctx.shadowColor = dc; ctx.shadowBlur = 7;
+        ctx.beginPath(); ctx.arc(fpX, fpY, 2.2 + Math.sin(t * 2 + fp) * 0.8, 0, Math.PI * 2); ctx.fill();
+        ctx.shadowBlur = 0;
+      }
+      ctx.globalAlpha = 1;
+
+      // Core sphere — hemisphere shading
+      const dCore = ctx.createRadialGradient(cx - docR * 0.32, cy - docR * 0.32, 0, cx, cy, docR * docP);
+      dCore.addColorStop(0, "#ffffff"); dCore.addColorStop(0.22, "#ffffcc"); dCore.addColorStop(0.50, dc); dCore.addColorStop(1, `${dc}70`);
       ctx.fillStyle = dCore; ctx.beginPath(); ctx.arc(cx, cy, docR * docP, 0, Math.PI * 2); ctx.fill();
 
+      // Rim lighting (shadow side)
+      const dRim = ctx.createRadialGradient(cx + docR * 0.5, cy + docR * 0.5, 0, cx, cy, docR * docP);
+      dRim.addColorStop(0, "rgba(0,0,0,0)"); dRim.addColorStop(0.6, "rgba(0,0,0,0)"); dRim.addColorStop(1, "rgba(0,0,0,0.45)");
+      ctx.fillStyle = dRim; ctx.beginPath(); ctx.arc(cx, cy, docR * docP, 0, Math.PI * 2); ctx.fill();
+
       // Pulsing outline on document planet
-      ctx.globalAlpha = 0.35 + Math.sin(t * 2.2) * 0.2;
-      ctx.strokeStyle = dc; ctx.lineWidth = 2;
-      ctx.shadowColor = dc; ctx.shadowBlur = 16;
+      ctx.globalAlpha = 0.4 + Math.sin(t * 2.2) * 0.25;
+      ctx.strokeStyle = dc; ctx.lineWidth = 2.5;
+      ctx.shadowColor = dc; ctx.shadowBlur = 22;
       ctx.beginPath(); ctx.arc(cx, cy, docR * docP + 3, 0, Math.PI * 2); ctx.stroke();
       ctx.shadowBlur = 0; ctx.globalAlpha = 1;
 
       // Label — document planet
       ctx.globalAlpha = 1;
-      ctx.shadowColor = dc; ctx.shadowBlur = 14;
+      ctx.shadowColor = dc; ctx.shadowBlur = 20;
       ctx.fillStyle = "#ffffff";
-      ctx.font = "bold 12px 'JetBrains Mono',monospace"; ctx.textAlign = "center";
-      ctx.fillText("⭐ YOUR DOCUMENT", cx, cy + docR + 22);
+      ctx.font = "800 13px 'JetBrains Mono',monospace"; ctx.textAlign = "center";
+      ctx.fillText("⭐ YOUR DOCUMENT", cx, cy + docR + 24);
       ctx.shadowBlur = 0;
-      ctx.globalAlpha = 0.72; ctx.fillStyle = dc;
-      ctx.font = "700 8px 'JetBrains Mono',monospace";
-      ctx.fillText("INTELLIGENCE CORE", cx, cy + docR + 34);
-      ctx.globalAlpha = 0.42; ctx.fillStyle = "#9a9aa0";
-      ctx.font = "9px Inter,sans-serif";
-      ctx.fillText("Drag to explore", cx, cy + docR + 46);
+      ctx.globalAlpha = 0.88; ctx.fillStyle = dc;
+      ctx.shadowColor = dc; ctx.shadowBlur = 10;
+      ctx.font = "800 9px 'JetBrains Mono',monospace";
+      ctx.fillText("INTELLIGENCE CORE", cx, cy + docR + 37);
+      ctx.shadowBlur = 0;
+      ctx.globalAlpha = 0.48; ctx.fillStyle = "#b0b0bc";
+      ctx.font = "10px Inter,sans-serif";
+      ctx.fillText("Drag to explore", cx, cy + docR + 50);
       ctx.globalAlpha = 1;
 
       frameRef.current = requestAnimationFrame(draw);
