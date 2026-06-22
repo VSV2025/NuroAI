@@ -177,6 +177,9 @@ function GlobalStyle() {
       @keyframes neuralScan { 0%{opacity:0;transform:translateY(-100%);} 15%{opacity:.55;} 85%{opacity:.3;} 100%{opacity:0;transform:translateY(160%);} }
       @keyframes neuralFloat { 0%,100%{transform:translateY(0) translateX(0);opacity:.18;} 50%{transform:translateY(-16px) translateX(6px);opacity:.45;} }
       @keyframes circuitPulse { 0%,100%{opacity:.04;} 50%{opacity:.11;} }
+      @keyframes dashFlow { to{stroke-dashoffset:-36;} }
+      @keyframes spinReverse { to{transform:rotate(-360deg);} }
+      @keyframes coreBreath { 0%,100%{box-shadow:0 0 44px var(--cc,#ef4444)28,0 0 90px var(--cc,#ef4444)10;} 50%{box-shadow:0 0 72px var(--cc,#ef4444)48,0 0 140px var(--cc,#ef4444)20;} }
 
       .reveal { animation:floatUp .7s cubic-bezier(.2,.7,.2,1) both; }
       .pulse { animation:glowPulse 2.6s ease-in-out infinite; }
@@ -192,12 +195,12 @@ function GlobalStyle() {
 
       /* sidebar nav */
       .navitem { display:flex; align-items:center; gap:12px; padding:10px 13px; border-radius:11px;
-        color:#9a9aa0; font-weight:500; font-size:14px; transition:all .2s; position:relative; }
-      .navitem:hover { color:#e8e8ea; background:rgba(255,255,255,0.04); }
-      .navitem.active { color:#fff; background:linear-gradient(90deg,rgba(0,229,255,.12),rgba(0,229,255,.02));
-        border:1px solid rgba(0,229,255,.22); }
-      .navitem.active::before { content:''; position:absolute; left:-1px; top:18%; bottom:18%; width:3px;
-        border-radius:3px; background:#00E5FF; box-shadow:0 0 12px rgba(0,229,255,.85); }
+        color:#8a8a94; font-weight:500; font-size:14px; transition:all .22s cubic-bezier(.4,0,.2,1); position:relative; cursor:pointer; }
+      .navitem:hover { color:#e8e8ea; background:rgba(220,38,38,0.07); box-shadow:inset 0 0 0 1px rgba(220,38,38,.10); }
+      .navitem.active { color:#fff; background:linear-gradient(90deg,rgba(220,38,38,.13),rgba(220,38,38,.03));
+        border:1px solid rgba(220,38,38,.28); box-shadow:0 0 18px rgba(220,38,38,.12); }
+      .navitem.active::before { content:''; position:absolute; left:-1px; top:16%; bottom:16%; width:3px;
+        border-radius:3px; background:#DC2626; box-shadow:0 0 14px rgba(220,38,38,.9), 0 0 28px rgba(220,38,38,.4); }
 
       .grid-bg {
         background-image:linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px),
@@ -1342,6 +1345,16 @@ function CentralProcessor({ coreColor, confidence, isHuman, aiProb, humanProb }:
           borderRadius:"50%", borderTop:`1px dashed ${coreColor}14`,
           borderRight:"1px solid transparent", borderBottom:"1px solid transparent",
           borderLeft:`1px dashed ${coreColor}09`, pointerEvents:"none" }}/>
+      <motion.div
+        animate={{ rotate: 360 }}
+        transition={{ duration: 24, ease: "linear", repeat: Infinity }}
+        style={{ position:"absolute", width:390, height:390, top:-88, left:-88,
+          borderRadius:"50%", border:`1px solid ${coreColor}07`,
+          borderBottomColor:`${coreColor}22`, pointerEvents:"none" }}/>
+      {/* Outer pulsing halo */}
+      <div style={{ position:"absolute", width:440, height:440, top:-113, left:-113,
+        borderRadius:"50%", background:`radial-gradient(circle, ${coreColor}06 0%, transparent 68%)`,
+        animation:"glowPulse 3.8s ease-in-out infinite", pointerEvents:"none" }}/>
       <div style={{
         width:214, height:214, position:"relative",
         background:"linear-gradient(145deg,#081624 0%,#0c2040 48%,#060f1c 100%)",
@@ -1381,12 +1394,16 @@ function CentralProcessor({ coreColor, confidence, isHuman, aiProb, humanProb }:
         </div>
         <div style={{ position:"absolute", inset:0, display:"flex", flexDirection:"column",
           alignItems:"center", justifyContent:"center", textAlign:"center", gap:2 }}>
-          <div style={{ fontSize:7.5, color:"rgba(255,255,255,.38)", letterSpacing:".22em", fontWeight:700 }}>
-            {isHuman?"AUTHENTICITY":"AI CONFIDENCE"}
+          <div style={{ fontSize:7, color:"rgba(255,255,255,.45)", letterSpacing:".24em", fontWeight:800,
+            fontFamily:"'JetBrains Mono',monospace" }}>
+            {isHuman?"AUTHENTICITY SCORE":"AI CONFIDENCE"}
           </div>
-          <div style={{ fontSize:48, fontWeight:900, color:"#fff", lineHeight:1,
-            textShadow:`0 0 24px ${coreColor},0 0 52px ${coreColor}55` }}>{confidence}%</div>
-          <div style={{ fontSize:8, color:coreColor, letterSpacing:".16em", fontWeight:800 }}>
+          <div style={{ fontSize:52, fontWeight:900, color:"#fff", lineHeight:1,
+            fontFamily:"'JetBrains Mono',monospace",
+            textShadow:`0 0 28px ${coreColor},0 0 60px ${coreColor}66,0 0 100px ${coreColor}22` }}>{confidence}%</div>
+          <div style={{ fontSize:7.5, color:coreColor, letterSpacing:".18em", fontWeight:800,
+            fontFamily:"'JetBrains Mono',monospace",
+            textShadow:`0 0 10px ${coreColor}` }}>
             {isHuman?"HUMAN WRITTEN":"AI GENERATED"}
           </div>
           <div style={{ width:58, height:1,
@@ -1405,8 +1422,9 @@ function CentralProcessor({ coreColor, confidence, isHuman, aiProb, humanProb }:
         </div>
       </div>
       <div style={{ textAlign:"center", marginTop:10 }}>
-        <div style={{ fontSize:7.5, color:`${coreColor}88`, letterSpacing:".20em", fontWeight:700 }}>
-          NUROAI · AI PROCESSOR v3
+        <div style={{ fontSize:7.5, color:`${coreColor}bb`, letterSpacing:".20em", fontWeight:800,
+          fontFamily:"'JetBrains Mono',monospace", textShadow:`0 0 8px ${coreColor}55` }}>
+          NuroAI Intelligence Core
         </div>
       </div>
     </div>
@@ -1463,12 +1481,17 @@ function ProcessorChipPanel({ nodes, coreColor, confidence, isHuman, aiProb, hum
         viewBox="0 0 1000 560" preserveAspectRatio="none">
         {PATHS.map((d,i)=>(
           <g key={i}>
-            <path d={d} fill="none" stroke={nc[i]} strokeWidth="1.5" strokeOpacity="0.20"/>
-            <path d={d} fill="none" stroke={nc[i]} strokeWidth="2.0" strokeOpacity="0.76"
+            <path d={d} fill="none" stroke={nc[i]} strokeWidth="1.8" strokeOpacity="0.22"/>
+            <path d={d} fill="none" stroke={nc[i]} strokeWidth="2.2" strokeOpacity="0.82"
               strokeDasharray="10,8"
               style={{ animation:`streamFlow ${2.0+i*0.32}s linear infinite` }}/>
-            <circle r="5.5" fill={nc[i]} fillOpacity="0.96"
-              style={{ filter:`drop-shadow(0 0 4px ${nc[i]})` }}>
+            {/* Glow halo behind dot */}
+            <circle r="11" fill={nc[i]} fillOpacity="0.12"
+              style={{ filter:`blur(4px)` }}>
+              <AnimMot dur={`${2.8+i*0.38}s`} repeatCount="indefinite" path={d}/>
+            </circle>
+            <circle r="7" fill={nc[i]} fillOpacity="0.98"
+              style={{ filter:`drop-shadow(0 0 6px ${nc[i]})` }}>
               <AnimMot dur={`${2.8+i*0.38}s`} repeatCount="indefinite" path={d}/>
             </circle>
           </g>
@@ -1492,10 +1515,10 @@ function ProcessorChipPanel({ nodes, coreColor, confidence, isHuman, aiProb, hum
       {nodes.slice(0,6).map((n,i)=>(
         <div key={n.id} style={{ position:"absolute", width:138, zIndex:4, ...MOD_STYLE[i] }}>
           <div style={{ padding:"9px 13px", borderRadius:8,
-            background:"rgba(4,12,22,.95)",
-            border:`1px solid ${nc[i]}48`,
-            boxShadow:`0 0 ${12 + Math.round(n.conf * 0.28)}px ${nc[i]}40,0 6px 24px rgba(0,0,0,.65)`,
-            backdropFilter:"blur(12px)" }}>
+            background:"rgba(5,14,26,.97)",
+            border:`1px solid ${nc[i]}55`,
+            boxShadow:`0 0 ${16 + Math.round(n.conf * 0.32)}px ${nc[i]}50, 0 0 2px ${nc[i]}30, inset 0 1px 0 rgba(255,255,255,.04), 0 6px 28px rgba(0,0,0,.75)`,
+            backdropFilter:"blur(16px)" }}>
             <div style={{ display:"flex", alignItems:"center", gap:5, marginBottom:6 }}>
               <div style={{ width:7, height:7, borderRadius:2,
                 background:nc[i], boxShadow:`0 0 ${5 + Math.round(n.conf * 0.10)}px ${nc[i]}`,
@@ -1503,9 +1526,10 @@ function ProcessorChipPanel({ nodes, coreColor, confidence, isHuman, aiProb, hum
               <div style={{ fontSize:7, fontWeight:800, color:nc[i],
                 letterSpacing:".11em", textTransform:"uppercase" }}>{n.name}</div>
             </div>
-            <div style={{ fontSize:26, fontWeight:900, color:"#fff", lineHeight:1,
-              textShadow:`0 0 14px ${nc[i]}` }}>
-              {n.conf}<span style={{ fontSize:12, color:"rgba(255,255,255,.4)", fontWeight:600 }}>%</span>
+            <div style={{ fontSize:28, fontWeight:900, color:"#fff", lineHeight:1,
+              fontFamily:"'JetBrains Mono',monospace",
+              textShadow:`0 0 18px ${nc[i]}, 0 0 36px ${nc[i]}44` }}>
+              {n.conf}<span style={{ fontSize:12, color:`${nc[i]}bb`, fontWeight:700, fontFamily:"'JetBrains Mono',monospace" }}>%</span>
             </div>
             <div style={{ height:2, borderRadius:1, background:"rgba(255,255,255,.06)",
               marginTop:7, overflow:"hidden" }}>
@@ -1795,19 +1819,25 @@ function GalaxyCanvas2D({ clusters, docColor, hovered, setHovered }: any) {
   colRef.current = docColor;
   hovRef.current = hovered;
 
-  const bgStars = useMemo(() => Array.from({ length: 170 }, () => ({
-    x: Math.random(), y: Math.random(), r: Math.random() * 0.9 + 0.2,
-    a: Math.random() * 0.4 + 0.06, sp: Math.random() * 0.007 + 0.002,
+  const bgStars = useMemo(() => Array.from({ length: 260 }, () => ({
+    x: Math.random(), y: Math.random(), r: Math.random() * 1.1 + 0.2,
+    a: Math.random() * 0.5 + 0.08, sp: Math.random() * 0.007 + 0.002,
   })), []);
-  const fgStars = useMemo(() => Array.from({ length: 55 }, () => ({
-    x: Math.random(), y: Math.random(), r: Math.random() * 1.5 + 0.5,
-    a: Math.random() * 0.55 + 0.15, sp: Math.random() * 0.016 + 0.006,
+  const fgStars = useMemo(() => Array.from({ length: 90 }, () => ({
+    x: Math.random(), y: Math.random(), r: Math.random() * 1.8 + 0.6,
+    a: Math.random() * 0.65 + 0.20, sp: Math.random() * 0.018 + 0.007,
+  })), []);
+  const twinkleStars = useMemo(() => Array.from({ length: 28 }, () => ({
+    x: Math.random(), y: Math.random(), r: Math.random() * 0.8 + 1.2,
+    phase: Math.random() * Math.PI * 2,
   })), []);
   const nebulae = useMemo(() => [
-    { x: 0.14, y: 0.22, col: "#22c55e", vx: 0.00007, vy: 0.00004 },
-    { x: 0.80, y: 0.18, col: "#4ade80", vx: -0.00005, vy: 0.00006 },
-    { x: 0.42, y: 0.70, col: "#ef4444", vx: 0.00006, vy: -0.00005 },
-    { x: 0.84, y: 0.65, col: "#f97316", vx: -0.00008, vy: 0.00004 },
+    { x: 0.14, y: 0.22, col: "#22c55e", vx: 0.00007, vy: 0.00004, rad: 0.38 },
+    { x: 0.80, y: 0.18, col: "#4ade80", vx: -0.00005, vy: 0.00006, rad: 0.32 },
+    { x: 0.42, y: 0.70, col: "#ef4444", vx: 0.00006, vy: -0.00005, rad: 0.36 },
+    { x: 0.84, y: 0.65, col: "#f97316", vx: -0.00008, vy: 0.00004, rad: 0.30 },
+    { x: 0.28, y: 0.50, col: "#7b61ff", vx: 0.00004, vy: 0.00007, rad: 0.42 },
+    { x: 0.66, y: 0.38, col: "#4cc9ff", vx: -0.00006, vy: -0.00004, rad: 0.28 },
   ], []);
   const orbitPtcls = useMemo(() =>
     CLUSTER_POS_2D.map(() => Array.from({ length: 4 }, (_, j) => ({
@@ -1845,26 +1875,40 @@ function GalaxyCanvas2D({ clusters, docColor, hovered, setHovered }: any) {
       }
 
       ctx.clearRect(0, 0, W, H);
-      ctx.fillStyle = "#050505";
-      ctx.fillRect(0, 0, W, H);
+      // Deep space radial background
+      const spaceBg = ctx.createRadialGradient(W*0.5, H*0.42, 0, W*0.5, H*0.5, Math.max(W,H)*0.78);
+      spaceBg.addColorStop(0, "#060818"); spaceBg.addColorStop(0.45, "#030610"); spaceBg.addColorStop(1, "#010206");
+      ctx.fillStyle = spaceBg; ctx.fillRect(0, 0, W, H);
 
       // Nebula clouds
       for (const nb of neb) {
         nb.x += nb.vx; nb.y += nb.vy;
         if (nb.x < -0.15 || nb.x > 1.15) nb.vx *= -1;
         if (nb.y < -0.15 || nb.y > 1.15) nb.vy *= -1;
-        const g = ctx.createRadialGradient(nb.x * W, nb.y * H, 0, nb.x * W, nb.y * H, 0.36 * Math.min(W, H));
-        g.addColorStop(0, `${nb.col}16`); g.addColorStop(0.5, `${nb.col}07`); g.addColorStop(1, `${nb.col}00`);
+        const rad = ((nb as any).rad ?? 0.36) * Math.min(W, H);
+        const g = ctx.createRadialGradient(nb.x * W, nb.y * H, 0, nb.x * W, nb.y * H, rad);
+        g.addColorStop(0, `${nb.col}1a`); g.addColorStop(0.45, `${nb.col}09`); g.addColorStop(1, `${nb.col}00`);
         ctx.fillStyle = g;
-        ctx.beginPath(); ctx.arc(nb.x * W, nb.y * H, 0.36 * Math.min(W, H), 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(nb.x * W, nb.y * H, rad, 0, Math.PI * 2); ctx.fill();
       }
 
       // BG stars (slow parallax)
       for (const s of bgStars) {
-        ctx.globalAlpha = Math.max(0.03, Math.min(0.7, s.a + Math.sin(t * s.sp * 8) * 0.2));
-        ctx.fillStyle = "#fff";
+        ctx.globalAlpha = Math.max(0.05, Math.min(0.75, s.a + Math.sin(t * s.sp * 8) * 0.22));
+        const hue = Math.random() > 0.85 ? "#c8d8ff" : "#ffffff";
+        ctx.fillStyle = hue;
         ctx.beginPath(); ctx.arc(s.x * W, s.y * H, s.r, 0, Math.PI * 2); ctx.fill();
       }
+      // Bright twinkling stars layer
+      for (const s of twinkleStars) {
+        const twinkle = 0.5 + 0.5 * Math.sin(t * 2.8 + s.phase);
+        ctx.globalAlpha = 0.35 + twinkle * 0.65;
+        ctx.shadowColor = "#e0eaff"; ctx.shadowBlur = 4 + twinkle * 6;
+        ctx.fillStyle = "#ffffff";
+        ctx.beginPath(); ctx.arc(s.x * W, s.y * H, s.r * (0.85 + twinkle * 0.3), 0, Math.PI * 2); ctx.fill();
+        ctx.shadowBlur = 0;
+      }
+      ctx.globalAlpha = 1;
       // FG stars (faster, subtle drift)
       for (const s of fgStars) {
         const px = (s.x + Math.sin(t * 0.04) * 0.008) * W;
@@ -2023,13 +2067,19 @@ function GalaxyCanvas2D({ clusters, docColor, hovered, setHovered }: any) {
       ctx.beginPath(); ctx.arc(cx, cy, docR * docP + 3, 0, Math.PI * 2); ctx.stroke();
       ctx.shadowBlur = 0; ctx.globalAlpha = 1;
 
-      // Label
-      ctx.globalAlpha = 1; ctx.fillStyle = "#fff";
-      ctx.font = "bold 11px 'JetBrains Mono',monospace"; ctx.textAlign = "center";
-      ctx.fillText("⭐ YOUR DOCUMENT", cx, cy + docR + 20);
-      ctx.globalAlpha = 0.65; ctx.fillStyle = "#9a9aa0";
-      ctx.font = "10px Inter,sans-serif";
-      ctx.fillText("Drag to explore", cx, cy + docR + 33);
+      // Label — document planet
+      ctx.globalAlpha = 1;
+      ctx.shadowColor = dc; ctx.shadowBlur = 14;
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "bold 12px 'JetBrains Mono',monospace"; ctx.textAlign = "center";
+      ctx.fillText("⭐ YOUR DOCUMENT", cx, cy + docR + 22);
+      ctx.shadowBlur = 0;
+      ctx.globalAlpha = 0.72; ctx.fillStyle = dc;
+      ctx.font = "700 8px 'JetBrains Mono',monospace";
+      ctx.fillText("INTELLIGENCE CORE", cx, cy + docR + 34);
+      ctx.globalAlpha = 0.42; ctx.fillStyle = "#9a9aa0";
+      ctx.font = "9px Inter,sans-serif";
+      ctx.fillText("Drag to explore", cx, cy + docR + 46);
       ctx.globalAlpha = 1;
 
       frameRef.current = requestAnimationFrame(draw);
@@ -2037,7 +2087,7 @@ function GalaxyCanvas2D({ clusters, docColor, hovered, setHovered }: any) {
 
     frameRef.current = requestAnimationFrame(draw);
     return () => { cancelAnimationFrame(frameRef.current); ro.disconnect(); };
-  }, [bgStars, fgStars, nebulae, orbitPtcls]);
+  }, [bgStars, fgStars, twinkleStars, nebulae, orbitPtcls]);
 
   const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
@@ -3368,15 +3418,18 @@ function NeuralEvidenceChamber({ docId }: { docId: string | null }) {
             const col = sig.neutral?"#f59e0b":sig.isHuman?"#22c55e":"#ef4444";
             return (
               <div key={i} style={{ textAlign:"center" }}>
-                <div style={{ width:44, height:44, borderRadius:"50%", margin:"0 auto 8px",
-                  background:`radial-gradient(circle at 35% 35%, ${col}dd, ${col}50)`,
-                  boxShadow:`0 0 18px ${col}45, 0 0 36px ${col}18`,
+                <div style={{ width:48, height:48, borderRadius:"50%", margin:"0 auto 8px",
+                  background:`radial-gradient(circle at 32% 32%, ${col}ff, ${col}66)`,
+                  boxShadow:`0 0 22px ${col}55, 0 0 44px ${col}22, inset 0 0 12px rgba(255,255,255,.08)`,
                   display:"flex", alignItems:"center", justifyContent:"center",
                   animation:`glowPulse ${2.2+i*0.22}s ease-in-out infinite`,
-                  animationDelay:`${i*0.14}s` }}>
-                  <div style={{ width:12, height:12, borderRadius:"50%", background:col }} />
+                  animationDelay:`${i*0.14}s`,
+                  border:`1px solid ${col}40` }}>
+                  <div style={{ width:14, height:14, borderRadius:"50%", background:"rgba(255,255,255,.9)",
+                    boxShadow:`0 0 8px ${col}` }} />
                 </div>
-                <div style={{ fontSize:10, color:"#6a6a72", lineHeight:1.35 }}>{sig.label}</div>
+                <div style={{ fontSize:10, fontWeight:600, color:"#8a8a94", lineHeight:1.35,
+                  fontFamily:"'JetBrains Mono',monospace", letterSpacing:".04em" }}>{sig.label}</div>
               </div>
             );
           })}
