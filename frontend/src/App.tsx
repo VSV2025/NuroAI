@@ -3703,7 +3703,14 @@ function DocAnalysis({ go, setDocId }) {
     try {
       const form = new FormData();
       form.append("file", fileObj);
-      const uploadRes = await fetch(`${API}/api/documents/upload`, { method: "POST", body: form });
+      // Retry once on 405/503 — can occur transiently during Render cold start
+      let uploadRes = await fetch(`${API}/api/documents/upload`, { method: "POST", body: form });
+      if (!uploadRes.ok && (uploadRes.status === 405 || uploadRes.status === 503)) {
+        await new Promise(r => setTimeout(r, 2000));
+        const retryForm = new FormData();
+        retryForm.append("file", fileObj);
+        uploadRes = await fetch(`${API}/api/documents/upload`, { method: "POST", body: retryForm });
+      }
       if (!uploadRes.ok) {
         let detail = "";
         try { detail = (await uploadRes.json()).detail ?? ""; } catch { /* non-JSON body */ }

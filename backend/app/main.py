@@ -1,7 +1,8 @@
 # app/main.py — builds the FastAPI application
 from datetime import datetime
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from .db import ping
 from .routers import dashboard, documents, authorship, crosslang, code, settings, authors
@@ -19,7 +20,16 @@ def create_app() -> FastAPI:
         allow_origins=["*"],
         allow_methods=["*"],
         allow_headers=["*"],
+        allow_credentials=False,
     )
+
+    @app.exception_handler(405)
+    async def method_not_allowed(request: Request, exc):
+        return JSONResponse(
+            status_code=405,
+            content={"detail": f"Method {request.method} not allowed. Use POST for uploads."},
+            headers={"Access-Control-Allow-Origin": "*"},
+        )
 
     @app.on_event("startup")
     def check_db():
